@@ -8,6 +8,8 @@ This test uses SeaBIOS. The installer starts from the kernel and initrd extracte
 
 ## Run locally with Docker and KVM
 
+The commands below target a Linux shell with Docker and KVM access. Use the GitHub workflow if your local Docker environment does not expose `/dev/kvm`.
+
 Docker must be able to access `/dev/kvm`, with at least 4 GiB of memory available for the guest and at least 25 GiB of free storage for the installed system and temporary files, in addition to the ISO. The VM has a new sparse 64 GiB disk and receives no host disks. The script refuses to overwrite an existing test disk. QEMU's SSH forwarding and the temporary preseed server listen only on loopback inside the container; no container ports are published.
 
 After building the installer and its Docker builder image with `scripts/rebuild-from-github.sh`:

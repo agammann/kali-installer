@@ -132,9 +132,11 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             'installer_completed': 'cat /var/log/vm-install-finished',
             'selected_packages': "dpkg-query -W -f='${Package} ${Status} ${Version}\\n' kali-linux-default kali-desktop-xfce openssh-server",
             'package_consistency': 'dpkg --audit',
+            'system_boot': 'timeout 180 systemctl is-system-running --wait',
+            'system_details': 'uname -r; df -h /',
             'network_address': 'ip -4 address show; ip route',
             'dns': 'getent ahostsv4 http.kali.org',
-            'network_http': 'curl --fail --location --retry 3 --max-time 60 --head https://www.kali.org/',
+            'network_http': 'curl --fail --location --silent --show-error --retry 3 --max-time 60 --head https://www.kali.org/',
             'desktop_service': 'for attempt in $(seq 1 24); do systemctl is-active --quiet display-manager && exit 0; sleep 5; done; systemctl is-active display-manager',
         }
         results = {}
