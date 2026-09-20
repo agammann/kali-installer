@@ -65,6 +65,8 @@ Do not commit an ISO or its parts to Git. GitHub blocks files over 100 MiB in Gi
 
 Boot the ISO in a disposable virtual machine. Complete an installation, then check that the new system boots, accepts the account created during setup, has working networking, and includes the packages you selected. Kali's [ISO testing guide](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/#testing-built-image) gives QEMU commands for BIOS and UEFI testing. A successful ISO build by itself does not prove that an installation works.
 
+Use the [automated VM installation check](VM-TESTING.md) to repeat a complete installation and first-boot check for a published release, either on GitHub Actions or locally with Docker and KVM. The workflow saves the tested ISO's checksum, check results, serial logs, and graphical login screenshot.
+
 ## Customize the installer
 
 - Add packages to `kali-config/installer-default/packages`. If they must also be installed into the target system, review `simple-cdd/profiles/kali.postinst`.

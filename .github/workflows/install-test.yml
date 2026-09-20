@@ -1,0 +1,61 @@
+name: VM installation check
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing multipart release to download and install
+        required: true
+        default: installer-2026-09-20
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Prepare disposable VM runner
+        run: |
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /usr/share/swift
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils xorriso python3-paramiko openssl
+          test -c /dev/kvm
+          df -h /
+      - name: Download and verify the published ISO
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          ./scripts/download-installer.sh --tag "$RELEASE_TAG" --output rebuild-output/download
+          # Reassembly has succeeded; the VM only needs the complete image.
+          rm -- rebuild-output/download/*.part???
+      - name: Install and boot with the ISO removed
+        run: |
+          digest=$(head -1 rebuild-output/download/SHA256SUMS | cut -d ' ' -f 1)
+          sudo /usr/bin/python3 tests/vm_install.py \
+            --iso "$PWD/rebuild-output/download/kali-linux-rolling-installer-amd64.iso" \
+            --output "$PWD/rebuild-output/vm-test" --expected-sha256 "$digest"
+          {
+            echo '### VM installation and first disk boot passed'
+            echo "Tested ISO SHA-256: $digest"
+            echo 'Password login, selected packages, package consistency, desktop service, DNS, and HTTPS passed.'
+            echo 'Test used SeaBIOS and a disposable 64 GiB virtual disk. UEFI installation and physical hardware were not tested.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save installation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vm-installation-evidence-${{ github.run_id }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            rebuild-output/download/SHA256SUMS
+            rebuild-output/vm-test/results.json
+            rebuild-output/vm-test/*.log
+            rebuild-output/vm-test/desktop-login.png

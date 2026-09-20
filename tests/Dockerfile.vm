@@ -1,0 +1,2 @@
+FROM kali-installer-builder:local
+RUN apt-get update && apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils python3 python3-paramiko openssh-client openssl && rm -rf /var/lib/apt/lists/*
