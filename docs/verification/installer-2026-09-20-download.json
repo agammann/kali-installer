@@ -1,0 +1,15 @@
+{
+  "release": "https://github.com/agammann/kali-installer/releases/tag/installer-2026-09-20",
+  "date": "2026-09-20",
+  "client": "Windows PowerShell 5.1; script downloaded from the public Release",
+  "bytes": 5047031808,
+  "sha256": "c104e3f427d074f5fda666bf10f24ace9c9dd52f857ed0dcf4d95ced7a6ac026",
+  "result": "passed",
+  "checks": [
+    "Public script matched reviewed source",
+    "All parts downloaded from GitHub into an empty directory",
+    "Each part SHA-256 verified",
+    "Reconstructed ISO SHA-256 verified by downloader",
+    "Independent host SHA-256 matched original build"
+  ]
+}

@@ -43,3 +43,11 @@ The same ISO was split into three assets of 1,992,294,400, 1,992,294,400, and 1,
 Both Windows PowerShell 5.1 and Git Bash downloaded all three full-size parts from a local HTTP server, checked their individual SHA-256 hashes, and reconstructed the ISO with the original checksum above. The small regression fixture also passed in PowerShell 7, PowerShell 5.1, and Git Bash, including cached-part reuse and rejection of missing parts, truncated parts, duplicate or unexpected filenames, a wrong whole-image checksum, and an existing mismatched ISO.
 
 The downloader regression suite also [passed on GitHub-hosted Linux, Windows, and macOS runners](https://github.com/agammann/kali-installer/actions/runs/35525878507). See [DOWNLOAD.md](DOWNLOAD.md) for downloading and reconstructing the release.
+
+After publication, the release's PowerShell script was downloaded from GitHub and run under Windows PowerShell 5.1 against an empty output directory. It downloaded and verified all three public assets and reconstructed the complete ISO. An independent host SHA-256 calculation matched the original build. The [public download record](docs/verification/installer-2026-09-20-download.json) records the size and checksum.
+
+## Full rebuild and publication on GitHub Actions
+
+[Run 35526289435](https://github.com/agammann/kali-installer/actions/runs/35526289435) completed successfully on a standard GitHub-hosted Ubuntu 24.04 runner. It used the Docker build script to clone source commit `0a14287ee2402e7fa1a8d5c766ced4c5dc12ec46` from GitHub, rebuilt the full installer, reported zero broken packages, verified its checksum and BIOS/UEFI boot records, split it into release assets, verified byte-for-byte reconstruction, and published [installer-ci-35526289435-1](https://github.com/agammann/kali-installer/releases/tag/installer-ci-35526289435-1).
+
+This CI-built ISO is 5,047,031,808 bytes with SHA-256 `7f996450fb7ffc03a1188ab003c9046c6883e01486c4b60033a46926420b5450`. It is a separate build from the local image above; checksums are recorded separately. The [CI build record](docs/verification/installer-ci-35526289435-build.json) includes the source, package versions, part sizes, and GitHub asset digests.

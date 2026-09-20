@@ -1,0 +1,43 @@
+{
+  "run": "https://github.com/agammann/kali-installer/actions/runs/35526289435",
+  "release": "https://github.com/agammann/kali-installer/releases/tag/installer-ci-35526289435-1",
+  "source_commit": "0a14287ee2402e7fa1a8d5c766ced4c5dc12ec46",
+  "iso_sha256": "7f996450fb7ffc03a1188ab003c9046c6883e01486c4b60033a46926420b5450",
+  "iso_bytes": 5047031808,
+  "runner": "GitHub-hosted ubuntu-24.04",
+  "result": "passed",
+  "checks": [
+    "Full Docker rebuild from GitHub source",
+    "Zero broken packages",
+    "ISO checksum",
+    "BIOS and UEFI boot records",
+    "Multipart reconstruction checksum",
+    "Automatic GitHub Release publication"
+  ],
+  "parts": [
+    {
+      "name": "kali-linux-rolling-installer-amd64.iso.part001",
+      "bytes": 1992294400,
+      "digest": "sha256:98d249d12710a9ead8d2f7b01f21a9c1efac32f9b5f2d2de572d4d61b16394f1"
+    },
+    {
+      "name": "kali-linux-rolling-installer-amd64.iso.part002",
+      "bytes": 1992294400,
+      "digest": "sha256:f72e4e24d2642f85e3b5afa6422cc64a5ec206edb3e0aab51b4193d151ef473a"
+    },
+    {
+      "name": "kali-linux-rolling-installer-amd64.iso.part003",
+      "bytes": 1062443008,
+      "digest": "sha256:a140bfa1dbb61d705d78288b882cef7c78b23a9b73ea43268bdaf2419a1ac3bb"
+    }
+  ],
+  "build_packages": [
+    "cpio\t2.15+dfsg-2.1",
+    "debian-cd\t3.2.3",
+    "dosfstools\t4.2-1.2",
+    "isolinux\t3:6.04~git20190206.bf6db5b4+dfsg1-3.2",
+    "mtools\t4.0.49-1",
+    "simple-cdd\t0.6.10",
+    "xorriso\t1.5.8.pl02-2"
+  ]
+}
