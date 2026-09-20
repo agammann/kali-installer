@@ -6,6 +6,8 @@ The installer uses [Simple-CDD](https://wiki.debian.org/Simple-CDD) and `debian-
 
 For the prebuilt full installer, use the [GitHub Release download instructions](DOWNLOAD.md). The Windows and Bash scripts download three parts and verify the reconstructed ISO. This independent preview passed a complete SeaBIOS VM installation and first boot; see the [verification record](BUILD-VERIFICATION.md) for results and remaining limits.
 
+The GitHub-hosted path is also verified: [full rebuild and release publication passed](https://github.com/agammann/kali-installer/actions/runs/35526289435), then [installation of that published CI image passed](https://github.com/agammann/kali-installer/actions/runs/35527558096). Download that build from [its CI release](https://github.com/agammann/kali-installer/releases/tag/installer-ci-35526289435-1), using the scripts attached to that release.
+
 ## Build an amd64 PC installer
 
 Build on a Kali Linux system with enough free space for the downloaded package mirror and ISO. A Kali virtual machine or container is suitable for building; test the resulting ISO in a separate virtual machine before installing it on a PC.
