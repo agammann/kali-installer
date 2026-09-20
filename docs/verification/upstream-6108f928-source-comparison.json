@@ -1,0 +1,63 @@
+{
+  "upstream_url": "https://gitlab.com/kalilinux/build-scripts/kali-installer",
+  "upstream_commit": "6108f92826417d0c474abd793fde946e3dfa85f9",
+  "checked_on": "2026-09-20",
+  "public_main_pipelines_returned_by_gitlab_api": 0,
+  "fork_builds": [
+    {
+      "source_commit": "aab5c047300bb3150732be370dc494581f278325",
+      "installer_inputs": [
+        {
+          "path": "kali-config",
+          "upstream_git_object": "a66b81d0775173fe567bd83eb9e6c0afde4b87fb",
+          "fork_git_object": "a66b81d0775173fe567bd83eb9e6c0afde4b87fb",
+          "identical": true
+        },
+        {
+          "path": "simple-cdd",
+          "upstream_git_object": "ead6cc402917e122f99423e637545641770108a3",
+          "fork_git_object": "ead6cc402917e122f99423e637545641770108a3",
+          "identical": true
+        },
+        {
+          "path": ".getopt.sh",
+          "upstream_git_object": "c34f063532ebdf61f8c92233ba30b086b05dc3be",
+          "fork_git_object": "c34f063532ebdf61f8c92233ba30b086b05dc3be",
+          "identical": true
+        }
+      ],
+      "build_script_git_object": "b3d216cc0ef4037e5a6d887d7c244a3c1b6b6cdd"
+    },
+    {
+      "source_commit": "0a14287ee2402e7fa1a8d5c766ced4c5dc12ec46",
+      "installer_inputs": [
+        {
+          "path": "kali-config",
+          "upstream_git_object": "a66b81d0775173fe567bd83eb9e6c0afde4b87fb",
+          "fork_git_object": "a66b81d0775173fe567bd83eb9e6c0afde4b87fb",
+          "identical": true
+        },
+        {
+          "path": "simple-cdd",
+          "upstream_git_object": "ead6cc402917e122f99423e637545641770108a3",
+          "fork_git_object": "ead6cc402917e122f99423e637545641770108a3",
+          "identical": true
+        },
+        {
+          "path": ".getopt.sh",
+          "upstream_git_object": "c34f063532ebdf61f8c92233ba30b086b05dc3be",
+          "fork_git_object": "c34f063532ebdf61f8c92233ba30b086b05dc3be",
+          "identical": true
+        }
+      ],
+      "build_script_git_object": "b3d216cc0ef4037e5a6d887d7c244a3c1b6b6cdd"
+    }
+  ],
+  "build_script_changes": [
+    "Resolve and quote source/output paths",
+    "Reject unknown variants immediately",
+    "Check xorrisofs and libjte before building"
+  ],
+  "upstream_maintainer_test_status": "No public pipeline result was available; not assumed.",
+  "build_tool_versions_identical": true
+}

@@ -2,9 +2,11 @@
 
 The [installer-2026-09-20 preview release](https://github.com/agammann/kali-installer/releases/tag/installer-2026-09-20) distributes the complete amd64 installer as three parts. Each part is below GitHub's 2 GiB asset limit. Joining the parts restores the original ISO without compression or changes to its contents.
 
-The full ISO build, package consistency checks, complete SeaBIOS and UEFI VM installations, and first boots with the ISO removed passed; see [BUILD-VERIFICATION.md](BUILD-VERIFICATION.md). Secure Boot and physical hardware remain untested. This is an independent preview build, not an official Kali release.
+The installer is ready to install in the tested BIOS and UEFI configurations. The full ISO build, package consistency checks, complete VM installations, and first boots with the ISO removed passed; see [BUILD-VERIFICATION.md](BUILD-VERIFICATION.md). **Secure Boot must be disabled:** these images do not support it, consistent with [Kali's installation requirements](https://www.kali.org/docs/installation/hard-disk-install/#preparing-for-the-installation). Physical-PC compatibility has not been tested. This is an independent preview build, not an official Kali release.
 
 ## Automatic download and verification
+
+The [upstream comparison](UPSTREAM-COMPARISON.md) records a successful unmodified GitLab rebuild and VM installation, with matching installer configuration, package files, and boot content.
 
 Allow at least 11 GB of free disk space for the downloaded parts and assembled ISO. Use a filesystem that supports files larger than 4 GB, such as NTFS, APFS, or ext4; FAT32 cannot hold this ISO.
 

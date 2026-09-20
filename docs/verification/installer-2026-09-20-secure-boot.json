@@ -1,0 +1,13 @@
+{
+  "iso_sha256": "c104e3f427d074f5fda666bf10f24ace9c9dd52f857ed0dcf4d95ced7a6ac026",
+  "firmware_description": "UEFI firmware for x86_64, with Secure Boot, required SMM, SB enabled, MS certs enrolled",
+  "firmware_code_sha256": "4d7942bbc437dbddd4bec2e8e6fb7d2063d872a08dbfea69bec417c5ab004663",
+  "firmware_template_sha256": "42ca3d90cbabb32c797f0253c26bead4bee9790f18cccf43993a88fa033ffa29",
+  "qemu_version": "QEMU emulator version 11.1.0 (Debian 1:11.1.0+ds-2)",
+  "hard_disks_attached": 0,
+  "network_devices": 0,
+  "observation": "The original release was rejected before the installer could boot with Secure Boot enabled.",
+  "firmware_message": "Access Denied -- rejected probably by Secure Boot",
+  "supported_configuration": "BIOS or UEFI with Secure Boot disabled",
+  "tested_at_utc_date": "2026-09-20"
+}

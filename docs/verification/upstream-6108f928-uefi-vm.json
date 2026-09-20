@@ -1,0 +1,81 @@
+{
+  "firmware_mode": {
+    "exit": 0,
+    "stdout": "UEFI\n",
+    "stderr": ""
+  },
+  "created_account_login": {
+    "exit": 0,
+    "stdout": "uid=1000(installtest) gid=1000(installtest) groups=1000(installtest),24(cdrom),25(floppy),27(sudo),29(audio),30(dip),44(video),46(plugdev),100(users),101(scanner),976(bluetooth),989(netdev),999(lpadmin)\n",
+    "stderr": ""
+  },
+  "installed_root": {
+    "exit": 0,
+    "stdout": "/dev/vda2 ext4\n",
+    "stderr": ""
+  },
+  "kali_identity": {
+    "exit": 0,
+    "stdout": "PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nVERSION_ID=\"2026.3\"\nVERSION=\"2026.3\"\nVERSION_CODENAME=kali-rolling\nID=kali\nID_LIKE=debian\nHOME_URL=\"https://www.kali.org/\"\nSUPPORT_URL=\"https://forums.kali.org/\"\nBUG_REPORT_URL=\"https://bugs.kali.org/\"\nANSI_COLOR=\"1;31\"\n",
+    "stderr": ""
+  },
+  "installer_completed": {
+    "exit": 0,
+    "stdout": "VM_INSTALL_FINISHED\n",
+    "stderr": ""
+  },
+  "selected_packages": {
+    "exit": 0,
+    "stdout": "kali-desktop-xfce install ok installed 2026.3.9\nkali-linux-default install ok installed 2026.3.9\nopenssh-server install ok installed 1:10.4p1-5\n",
+    "stderr": ""
+  },
+  "package_consistency": {
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "system_boot": {
+    "exit": 0,
+    "stdout": "running\n",
+    "stderr": ""
+  },
+  "system_details": {
+    "exit": 0,
+    "stdout": "7.1.5+kali-amd64\nFilesystem      Size  Used Avail Use% Mounted on\n/dev/vda2        59G   16G   40G  28% /\n",
+    "stderr": ""
+  },
+  "network_address": {
+    "exit": 0,
+    "stdout": "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000\n    inet 127.0.0.1/8 scope host lo\n       valid_lft forever preferred_lft forever\n2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000\n    inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic noprefixroute eth0\n       valid_lft 86397sec preferred_lft 86397sec\ndefault via 10.0.2.2 dev eth0 proto dhcp src 10.0.2.15 metric 100 \n10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric 100 \n",
+    "stderr": ""
+  },
+  "dns": {
+    "exit": 0,
+    "stdout": "54.39.128.230   STREAM tethys.kali.org\n54.39.128.230   DGRAM  \n54.39.128.230   RAW    \n54.39.128.230   STREAM \n54.39.128.230   DGRAM  \n54.39.128.230   RAW    \n",
+    "stderr": ""
+  },
+  "network_http": {
+    "exit": 0,
+    "stdout": "HTTP/2 200 \r\ndate: Sun, 20 Sep 2026 21:06:01 GMT\r\ncontent-type: text/html; charset=utf-8\r\ncache-control: max-age=600\r\nx-frame-options: SAMEORIGIN\r\nexpires: Sun, 20 Sep 2026 21:16:01 UTC\r\nlast-modified: Wed, 16 Sep 2026 13:40:29 GMT\r\npermissions-policy: interest-cohort=()\r\nvary: Origin\r\nx-request-id: 01M30A7RV2DHM9QXB1TJGJ629Q\r\nx-xss-protection: 1; mode=block\r\ncf-cache-status: DYNAMIC\r\nstrict-transport-security: max-age=2592000\r\nexpect-ct: max-age=86400, enforce\r\nreferrer-policy: same-origin\r\nx-content-type-options: nosniff\r\nserver: cloudflare\r\ncf-ray: a3e3caa448038e7f-LAX\r\n\r\n",
+    "stderr": ""
+  },
+  "desktop_service": {
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "efi_system_partition": {
+    "exit": 0,
+    "stdout": "/dev/vda1 vfat\n",
+    "stderr": ""
+  },
+  "efi_bootloader": {
+    "exit": 0,
+    "stdout": "install ok installed\n",
+    "stderr": ""
+  },
+  "iso_sha256": "ed319afc1d5006130664c9290ae7b94445f8f245c5ee66a60fa6181ecb2bd765",
+  "firmware": "OVMF UEFI (Secure Boot disabled)",
+  "installer_boot_method": "ISO kernel and initrd; original ISO attached as installation media",
+  "installed_boot_method": "Virtual disk only; ISO, kernel, and initrd detached"
+}

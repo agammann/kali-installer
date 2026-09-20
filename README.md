@@ -8,6 +8,8 @@ For the prebuilt full installer, use the [GitHub Release download instructions](
 
 The GitHub-hosted path is also verified: [full rebuild and release publication passed](https://github.com/agammann/kali-installer/actions/runs/35526289435), then installation of that published CI image passed in both [SeaBIOS](https://github.com/agammann/kali-installer/actions/runs/35527558096) and [UEFI](https://github.com/agammann/kali-installer/actions/runs/35531086332). Download that build from [its CI release](https://github.com/agammann/kali-installer/releases/tag/installer-ci-35526289435-1), using the scripts attached to that release.
 
+The [comparison with the GitLab source](UPSTREAM-COMPARISON.md) also passed: installer configuration is unchanged, an unmodified upstream rebuild has matching package and boot content, and its complete UEFI installation passed the same 15 checks. Generated timestamps and archive metadata explain the different ISO hashes.
+
 ## Build an amd64 PC installer
 
 Build on a Kali Linux system with enough free space for the downloaded package mirror and ISO. A Kali virtual machine or container is suitable for building; test the resulting ISO in a separate virtual machine before installing it on a PC.
@@ -64,6 +66,8 @@ The workflow has a three-hour limit and checks available disk space before build
 Do not commit an ISO or its parts to Git. GitHub blocks files over 100 MiB in Git and limits each Release asset to under 2 GiB. This repository distributes the full ISO as three Release assets, each at most 1,900 MiB, with scripts that verify and join them. See [download and packaging instructions](DOWNLOAD.md), [GitHub's repository limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits), and [Release asset limits](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases#storage-and-bandwidth-quotas).
 
 ## Test before use
+
+The published images are ready to install in the tested BIOS and UEFI configurations: the full build, verified download, complete installation, and first disk boot have passed. **Secure Boot must be disabled.** These images use Kali's unsigned kernel and do not provide Secure Boot support, consistent with [Kali's installation requirements](https://www.kali.org/docs/installation/hard-disk-install/#preparing-for-the-installation). Physical-PC testing is optional follow-up; compatibility with a particular machine's devices has not been established by the VM tests.
 
 Boot the ISO in a disposable virtual machine. Complete an installation, then check that the new system boots, accepts the account created during setup, has working networking, and includes the packages you selected. Kali's [ISO testing guide](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/#testing-built-image) gives QEMU commands for BIOS and UEFI testing. A successful ISO build by itself does not prove that an installation works.
 

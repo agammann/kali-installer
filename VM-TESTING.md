@@ -8,6 +8,8 @@ The test uses SeaBIOS by default, or OVMF UEFI with Secure Boot disabled when `u
 
 ## Run locally with Docker and KVM
 
+Use the `bios` or `uefi` modes below for installation testing. Secure Boot is unsupported by these images; the separate [compatibility check](BUILD-VERIFICATION.md#secure-boot-compatibility) records firmware rejecting the original ISO when Secure Boot is enabled. Full VM installation testing is the deployment check for this repository; physical installation testing is optional.
+
 The commands below target a Linux shell with Docker and KVM access. Use the GitHub workflow if your local Docker environment does not expose `/dev/kvm`.
 
 Docker must be able to access `/dev/kvm`, with at least 4 GiB of memory available for the guest and at least 25 GiB of free storage for the installed system and temporary files, in addition to the ISO. The VM has a new sparse 64 GiB disk and receives no host disks. The script refuses to overwrite an existing test disk. QEMU's SSH forwarding and the temporary preseed server listen only on loopback inside the container; no container ports are published.

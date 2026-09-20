@@ -1,0 +1,114 @@
+{
+  "upstream_commit": "6108f92826417d0c474abd793fde946e3dfa85f9",
+  "upstream_iso_sha256": "ed319afc1d5006130664c9290ae7b94445f8f245c5ee66a60fa6181ecb2bd765",
+  "fork_iso_sha256": "c104e3f427d074f5fda666bf10f24ace9c9dd52f857ed0dcf4d95ced7a6ac026",
+  "upstream_manifest_files": 4048,
+  "fork_manifest_files": 4048,
+  "repeated_identical_manifest_entries": {
+    "upstream": [
+      "README.html",
+      "README.txt"
+    ],
+    "fork": [
+      "README.html",
+      "README.txt"
+    ]
+  },
+  "identical_manifest_entries": 4044,
+  "different_manifest_entries": [
+    ".disk/info",
+    "boot/grub/efi.img",
+    "dists/kali-rolling/Release",
+    "install.amd/gtk/initrd.gz"
+  ],
+  "missing_from_fork": [],
+  "added_in_fork": [],
+  "upstream_package_files": 3964,
+  "fork_package_files": 3964,
+  "package_manifests_identical": true,
+  "boot_payload_sha256": {
+    "upstream": {
+      "/install.amd/vmlinuz": "83de73a45b0a8973eb9fce16b744146cca8f56ec86ae1a76c47f242ff350c0d7",
+      "/install.amd/initrd.gz": "4e654423b4cf7b8c2089a184c8e1b0d296ce5f14bd5259c6d97870bafd070216",
+      "/EFI/boot/bootx64.efi": "9b77a46776fd4cde9adc2364bebb81cb6da955470856fe0708e6a871fd1f4929",
+      "/EFI/boot/grubx64.efi": "0b67d01b1b909ab173064e00d3ff7827d184bee9f08119578d37db847677037a"
+    },
+    "fork": {
+      "/install.amd/vmlinuz": "83de73a45b0a8973eb9fce16b744146cca8f56ec86ae1a76c47f242ff350c0d7",
+      "/install.amd/initrd.gz": "4e654423b4cf7b8c2089a184c8e1b0d296ce5f14bd5259c6d97870bafd070216",
+      "/EFI/boot/bootx64.efi": "9b77a46776fd4cde9adc2364bebb81cb6da955470856fe0708e6a871fd1f4929",
+      "/EFI/boot/grubx64.efi": "0b67d01b1b909ab173064e00d3ff7827d184bee9f08119578d37db847677037a"
+    }
+  },
+  "boot_payloads_identical": true,
+  "comparison_method": "Compare the ISO-provided per-file MD5 manifests, plus independent SHA-256 hashes of extracted installer kernel, initrd, and EFI executables. Whole-ISO SHA-256 values are separately recorded; identical ISO bytes are not assumed.",
+  "generated_difference_analysis": {
+    ".disk/info": {
+      "difference": "Build date/time in image description",
+      "upstream": "Kali GNU/Linux rolling \"Kali-rolling\" - Official amd64 BD Binary-1 with firmware 20260920-20:46",
+      "fork": "Kali GNU/Linux rolling \"Kali-rolling\" - Official amd64 BD Binary-1 with firmware 20260920-16:33"
+    },
+    "dists/kali-rolling/Release": {
+      "difference": "Date field only",
+      "all_other_lines_identical": true
+    },
+    "boot/grub/efi.img": {
+      "difference": "FAT directory-entry creation and modification times only",
+      "differing_bytes": 48,
+      "directory_entry_names": [
+        "EFI        ",
+        ".          ",
+        "..         ",
+        "BOOT       ",
+        "KALI       ",
+        ".          ",
+        "..         ",
+        "GRUBX64 EFI",
+        "BOOTX64 EFI",
+        ".          ",
+        "..         ",
+        "GRUB    CFG"
+      ],
+      "file_sha256": {
+        "upstream": {
+          "efi/boot/bootx64.efi": "9b77a46776fd4cde9adc2364bebb81cb6da955470856fe0708e6a871fd1f4929",
+          "efi/boot/grubx64.efi": "0b67d01b1b909ab173064e00d3ff7827d184bee9f08119578d37db847677037a",
+          "efi/kali/grub.cfg": "5833bcdb74f4b349773dbb46d2a62ac53755e9ebdb2948629877ea631c728be2"
+        },
+        "fork": {
+          "efi/boot/bootx64.efi": "9b77a46776fd4cde9adc2364bebb81cb6da955470856fe0708e6a871fd1f4929",
+          "efi/boot/grubx64.efi": "0b67d01b1b909ab173064e00d3ff7827d184bee9f08119578d37db847677037a",
+          "efi/kali/grub.cfg": "5833bcdb74f4b349773dbb46d2a62ac53755e9ebdb2948629877ea631c728be2"
+        }
+      },
+      "file_contents_identical": true
+    },
+    "install.amd/gtk/initrd.gz": {
+      "difference": "CPIO inode numbers and modification timestamps",
+      "entries_compared": 4868,
+      "changed_fields": {
+        "ino": 666,
+        "mtime": 31
+      },
+      "file_contents_and_other_metadata_identical": true,
+      "hardlink_groups_identical": true,
+      "hardlink_groups_compared": 0
+    }
+  },
+  "installed_system_comparison": {
+    "reference_checks_passed": 15,
+    "fork_checks_passed": 15,
+    "matching_check_outputs": {
+      "firmware_mode": true,
+      "installed_root": true,
+      "kali_identity": true,
+      "selected_packages": true,
+      "package_consistency": true,
+      "system_boot": true,
+      "efi_system_partition": true,
+      "efi_bootloader": true
+    },
+    "reference_results": "upstream-6108f928-uefi-vm.json",
+    "fork_results": "installer-2026-09-20-uefi-vm.json"
+  }
+}
