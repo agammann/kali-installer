@@ -1,0 +1,41 @@
+name: Download script checks
+
+on:
+  push:
+    branches: [main]
+    paths: ['scripts/**', 'tests/**', '.github/workflows/download-tests.yml']
+  pull_request:
+    paths: ['scripts/**', 'tests/**', '.github/workflows/download-tests.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  download:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Test available Bash and PowerShell clients
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then
+            export KALI_TEST_BASH='C:\Program Files\Git\bin\bash.exe'
+          fi
+          python tests/test_release_download.py
+      - name: Test Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:KALI_TEST_BASH = 'C:\Program Files\Git\bin\bash.exe'
+          $env:KALI_TEST_POWERSHELL = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+          python tests/test_release_download.py

@@ -1,0 +1,130 @@
+name: Full installer rebuild
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the rebuilt ISO as a multipart preview release
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/rebuild.yml'
+      - 'Dockerfile'
+      - 'build.sh'
+      - 'scripts/rebuild-from-github.sh'
+      - 'kali-config/**'
+      - 'simple-cdd/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: full-installer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Make room on the disposable hosted runner
+        shell: bash
+        run: |
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /usr/share/swift
+          df -h /
+          free_kib=$(df --output=avail / | tail -1)
+          if (( free_kib < 35 * 1024 * 1024 )); then
+            echo 'At least 35 GiB of free runner storage is required.' >&2
+            exit 1
+          fi
+      - name: Rebuild the full ISO from this GitHub commit
+        shell: bash
+        run: |
+          mkdir -p rebuild-output
+          ./scripts/rebuild-from-github.sh "$PWD/rebuild-output" "$GITHUB_SHA" 2>&1 | tee rebuild-output/rebuild-command.log
+          test "$(cat rebuild-output/SOURCE_COMMIT)" = "$GITHUB_SHA"
+      - name: Verify checksum and BIOS/UEFI boot records
+        shell: bash
+        run: |
+          (cd rebuild-output && sha256sum -c SHA256SUMS)
+          docker run --rm --mount "type=bind,source=$PWD/rebuild-output,target=/out,readonly" \
+            kali-installer-builder:local xorriso -indev /out/kali-linux-rolling-installer-amd64.iso \
+            -report_el_torito plain -report_system_area plain 2>&1 | tee rebuild-output/BOOT-RECORDS.txt
+          grep -Eq 'El Torito boot img.*BIOS' rebuild-output/BOOT-RECORDS.txt
+          grep -Eq 'El Torito boot img.*UEFI' rebuild-output/BOOT-RECORDS.txt
+      - name: Package and verify the release parts
+        shell: bash
+        run: |
+          digest=$(cut -d ' ' -f 1 rebuild-output/SHA256SUMS)
+          python3 scripts/package-release.py rebuild-output/kali-linux-rolling-installer-amd64.iso \
+            rebuild-output/release-parts --expected-sha256 "$digest"
+          # Compare the concatenated bytes without storing another 5 GB ISO.
+          actual=$(cat rebuild-output/release-parts/*.part??? | sha256sum | cut -d ' ' -f 1)
+          test "$actual" = "$digest"
+          {
+            echo '### Full installer rebuilt successfully'
+            echo "Source commit: $GITHUB_SHA"
+            echo "ISO SHA-256: $digest"
+            echo 'Checksum, multipart reconstruction, and BIOS/UEFI boot records passed.'
+            echo 'This workflow does not perform an installation test.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save build evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: build-evidence-${{ github.run_id }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            rebuild-output/*.log
+            rebuild-output/SHA256SUMS
+            rebuild-output/SOURCE_COMMIT
+            rebuild-output/BUILD_PACKAGES
+            rebuild-output/BOOT-RECORDS.txt
+      - name: Publish multipart preview release
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          tag="installer-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cp scripts/download-installer.{sh,ps1} DOWNLOAD.md rebuild-output/SOURCE_COMMIT \
+            rebuild-output/BUILD_PACKAGES rebuild-output/BOOT-RECORDS.txt rebuild-output/release-parts/
+          # Make the release downloaders select their own build by default.
+          sed -i "s/installer-2026-09-20/$tag/g" rebuild-output/release-parts/download-installer.{sh,ps1} \
+            rebuild-output/release-parts/DOWNLOAD.md
+          digest=$(cut -d ' ' -f 1 rebuild-output/SHA256SUMS)
+          size=$(stat -c '%s' rebuild-output/kali-linux-rolling-installer-amd64.iso)
+          python3 - "$digest" "$size" <<'PY'
+          from pathlib import Path
+          import sys
+          path = Path('rebuild-output/release-parts/DOWNLOAD.md')
+          text = path.read_text()
+          text = text.replace('c104e3f427d074f5fda666bf10f24ace9c9dd52f857ed0dcf4d95ced7a6ac026', sys.argv[1])
+          text = text.replace('5,047,031,808', format(int(sys.argv[2]), ','))
+          path.write_text(text)
+          PY
+          cat > rebuild-output/release-notes.md <<EOF
+          Full amd64 installer rebuilt on GitHub Actions from commit $GITHUB_SHA.
+
+          Download a downloader script from this release, review it, and follow the attached DOWNLOAD.md. The scripts select this release by default. Allow at least 11 GB of free disk space. Flash only the reconstructed ISO.
+
+          ISO SHA-256: $digest
+
+          Build, package consistency, checksum, multipart reconstruction, and BIOS/UEFI boot records passed. A VM installation of this particular build has not been tested, so this is a preview.
+
+          [Build logs](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
+          EOF
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft --prerelease \
+            --title "Kali amd64 installer - CI build $GITHUB_RUN_ID" --notes-file rebuild-output/release-notes.md
+          gh release upload "$tag" rebuild-output/release-parts/* --repo "$GITHUB_REPOSITORY"
+          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false
+          echo "[Download preview release](https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag)" >> "$GITHUB_STEP_SUMMARY"

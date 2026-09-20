@@ -51,6 +51,14 @@ For WSL, enable Docker Desktop's [integration for your distribution](https://doc
 
 The [full build verification](BUILD-VERIFICATION.md) records a successful GitHub-source rebuild and its checksum. It does not replace an installation test in a virtual machine.
 
+### Rebuild on GitHub Actions
+
+Open [Full installer rebuild](https://github.com/agammann/kali-installer/actions/workflows/rebuild.yml), select **Run workflow**, and choose whether to publish the rebuilt ISO as a multipart preview release. The workflow also runs when installer sources or build configuration change on `main`. It uses a standard Ubuntu GitHub-hosted runner and the same Docker build script, pinned to the workflow's source commit.
+
+Every run records its build logs, source commit, build-package versions, ISO checksum, and boot-record report in a `build-evidence` artifact retained for 14 days. It verifies the split parts reconstruct the original bytes. When publication is enabled, it uploads the parts and downloader scripts to a separate `installer-ci-...` preview release. Each release's scripts select that build by default. Without publication enabled, the ISO is discarded when the runner finishes; the evidence remains available.
+
+The workflow has a three-hour limit and checks available disk space before building. It does not perform a VM installation. Each freshly rebuilt ISO needs its own installation test before being promoted from preview. Downloader regression checks run separately on Linux, Windows, and macOS.
+
 Do not commit an ISO or its parts to Git. GitHub blocks files over 100 MiB in Git and limits each Release asset to under 2 GiB. This repository distributes the full ISO as three Release assets, each at most 1,900 MiB, with scripts that verify and join them. See [download and packaging instructions](DOWNLOAD.md), [GitHub's repository limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits), and [Release asset limits](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases#storage-and-bandwidth-quotas).
 
 ## Test before use
