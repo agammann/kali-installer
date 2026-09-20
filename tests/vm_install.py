@@ -7,6 +7,7 @@ import json
 import logging
 from pathlib import Path
 import secrets
+import shutil
 import socket
 import subprocess
 import threading
@@ -18,6 +19,9 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--iso', type=Path, required=True)
 parser.add_argument('--output', type=Path, default=Path('/out/vm-test'))
 parser.add_argument('--expected-sha256', required=True)
+parser.add_argument('--firmware', choices=('bios', 'uefi'), default='bios')
+parser.add_argument('--ovmf-code', type=Path, default=Path('/usr/share/OVMF/OVMF_CODE_4M.fd'))
+parser.add_argument('--ovmf-vars', type=Path, default=Path('/usr/share/OVMF/OVMF_VARS_4M.fd'))
 args = parser.parse_args()
 ROOT = args.output.resolve()
 ROOT.mkdir(parents=True, exist_ok=True)
@@ -32,6 +36,16 @@ if iso_hash != args.expected_sha256:
 DISK = ROOT / 'installed.qcow2'
 if DISK.exists():
     raise SystemExit('Refusing to overwrite an existing test disk')
+firmware_args = []
+if args.firmware == 'uefi':
+    if not args.ovmf_code.is_file() or not args.ovmf_vars.is_file():
+        raise SystemExit('UEFI testing requires OVMF code and variable-store templates')
+    # Both boots share this private variable store; never write to the template.
+    variables = ROOT / 'uefi-vars.fd'
+    shutil.copyfile(args.ovmf_vars, variables)
+    firmware_args = ['-machine', 'q35',
+                     '-drive', f'if=pflash,format=raw,readonly=on,file={args.ovmf_code.resolve()}',
+                     '-drive', f'if=pflash,format=raw,file={variables}']
 HTTP = ROOT / 'http'
 HTTP.mkdir(exist_ok=True)
 password = secrets.token_urlsafe(24)
@@ -93,7 +107,7 @@ subprocess.run(['qemu-img', 'create', '-f', 'qcow2', str(DISK), '64G'], check=Tr
 base = ['qemu-system-x86_64', '-enable-kvm', '-cpu', 'host', '-m', '4096', '-smp', '4',
         '-drive', f'file={DISK},format=qcow2,if=virtio', '-display', 'none',
         '-netdev', 'user,id=n0,hostfwd=tcp:127.0.0.1:2222-:22', '-device', 'virtio-net-pci,netdev=n0',
-        '-qmp', f'unix:{ROOT}/qmp.sock,server=on,wait=off']
+        '-qmp', f'unix:{ROOT}/qmp.sock,server=on,wait=off'] + firmware_args
 install_args = base + ['-cdrom', str(ISO), '-kernel', str(ROOT / 'vmlinuz'), '-initrd', str(ROOT / 'initrd.gz'),
                       '-append', 'auto=true priority=critical preseed/url=http://10.0.2.2:8766/preseed.cfg console=ttyS0,115200n8 DEBIAN_FRONTEND=text net.ifnames=0',
                       '-serial', 'file:' + str(ROOT / 'installer-serial.log'), '-no-reboot']
@@ -126,6 +140,8 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
                     raise
                 time.sleep(10)
         checks = {
+            'firmware_mode': ('test -d /sys/firmware/efi && echo UEFI' if args.firmware == 'uefi'
+                              else 'test ! -d /sys/firmware/efi && echo BIOS'),
             'created_account_login': 'id',
             'installed_root': 'findmnt -n -o SOURCE,FSTYPE /',
             'kali_identity': '. /etc/os-release; test "$ID" = kali; cat /etc/os-release',
@@ -139,6 +155,11 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             'network_http': 'curl --fail --location --silent --show-error --retry 3 --max-time 60 --head https://www.kali.org/',
             'desktop_service': 'for attempt in $(seq 1 24); do systemctl is-active --quiet display-manager && exit 0; sleep 5; done; systemctl is-active display-manager',
         }
+        if args.firmware == 'uefi':
+            checks.update({
+                'efi_system_partition': 'test "$(findmnt -n -o FSTYPE /boot/efi)" = vfat && findmnt -n -o SOURCE,FSTYPE /boot/efi',
+                'efi_bootloader': "dpkg-query -W -f='${Status}\\n' grub-efi-amd64 | grep -x 'install ok installed'",
+            })
         results = {}
         for name, command in checks.items():
             _, stdout, stderr = client.exec_command(command, timeout=300)
@@ -147,7 +168,7 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             results[name] = {'exit': code, 'stdout': out, 'stderr': err}
             print(f'{name}: exit {code}', flush=True)
         results['iso_sha256'] = iso_hash
-        results['firmware'] = 'SeaBIOS'
+        results['firmware'] = 'OVMF UEFI (Secure Boot disabled)' if args.firmware == 'uefi' else 'SeaBIOS'
         results['installer_boot_method'] = 'ISO kernel and initrd; original ISO attached as installation media'
         results['installed_boot_method'] = 'Virtual disk only; ISO, kernel, and initrd detached'
         (ROOT / 'results.json').write_text(json.dumps(results, indent=2))

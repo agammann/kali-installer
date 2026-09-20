@@ -2,9 +2,9 @@
 
 The [VM installation check](https://github.com/agammann/kali-installer/actions/workflows/install-test.yml) workflow downloads an existing multipart release, verifies and reconstructs its ISO, installs it to a new 64 GiB virtual disk, and boots that disk with the installation media removed.
 
-Select **Run workflow** and enter the release tag. The workflow checks password login for the account created during installation, the Kali operating-system identity, the installed root filesystem, the selected Xfce desktop and default Kali packages, package consistency, desktop service startup, DNS, and an outbound HTTPS request. Its evidence artifact contains the ISO checksum, result details, serial logs, and a screenshot of the graphical login screen. It does not contain the VM disk or temporary account credentials.
+Select **Run workflow**, enter the release tag, and choose `bios` or `uefi`. The workflow checks password login for the account created during installation, the Kali operating-system identity, the installed root filesystem, the selected Xfce desktop and default Kali packages, package consistency, desktop service startup, DNS, and an outbound HTTPS request. UEFI mode also requires EFI runtime support, a mounted FAT EFI system partition, and the installed GRUB EFI package. Its evidence artifact contains the ISO checksum, result details, serial logs, and a screenshot of the graphical login screen. It does not contain the VM disk or temporary account credentials.
 
-This test uses SeaBIOS. The installer starts from the kernel and initrd extracted from the ISO, with the original ISO attached as installation media. The subsequent boot uses the installed disk's bootloader with no ISO or externally supplied kernel. It does not test the ISO's interactive boot menu, UEFI installation, every installation option, or physical hardware.
+The test uses SeaBIOS by default, or OVMF UEFI with Secure Boot disabled when `uefi` is selected. UEFI runs use a private copy of the firmware variable store shared between installation and the first disk boot. The installer starts from the kernel and initrd extracted from the ISO, with the original ISO attached as installation media. The subsequent boot uses the installed disk's bootloader with no ISO or externally supplied kernel. It does not test the ISO's interactive boot menu, Secure Boot, every installation option, or physical hardware.
 
 ## Run locally with Docker and KVM
 
@@ -24,6 +24,8 @@ docker run --rm --device /dev/kvm \
   --iso /out/kali-linux-rolling-installer-amd64.iso \
   --output /out/vm-test --expected-sha256 "$digest"
 ```
+
+For a UEFI installation, add `--firmware uefi` and use a separate output directory such as `--output /out/vm-uefi`. The Docker image includes OVMF. When running outside that image, install your distribution's `ovmf` package; `--ovmf-code` and `--ovmf-vars` accept alternate firmware template paths if needed.
 
 The test creates a random password for its disposable account, applies installation answers through an external preseed, and enables SSH for verification in that VM. It does not modify the ISO. The virtual disk is a test artifact, not a distributable image. Keep only the logs and results you need after testing, and remove the disposable disk when finished.
 
