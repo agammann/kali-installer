@@ -6,10 +6,11 @@ set -e
 set -o pipefail # Bashism
 
 # Kali's default values
+SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 KALI_DIST="kali-rolling"
 KALI_VERSION=""
 KALI_VARIANT="default"
-TARGET_DIR="$(dirname $0)/images"
+TARGET_DIR="$SCRIPT_DIR/images"
 TARGET_SUBDIR=""
 SUDO="sudo"
 VERBOSE=""
@@ -117,10 +118,23 @@ require_package() {
   debug "$pkg version: $pkg_version"
 }
 
+require_jigdo_xorrisofs() {
+  if ! command -v xorrisofs >/dev/null 2>&1; then
+    echo "ERROR: You need xorrisofs (from the xorriso package) to build an installer image" >&2
+    exit 1
+  fi
+
+  if ! xorrisofs -version 2>&1 | grep -q '^libjte[[:space:]]'; then
+    echo "ERROR: xorrisofs was built without libjte (Jigdo Template Extraction) support" >&2
+    echo "Install a xorriso package with libjte support before building the installer image" >&2
+    exit 1
+  fi
+}
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 # Change directory into where the script is
-cd $(dirname $0)/
+cd "$SCRIPT_DIR"
 
 # Allowed command line options
 source .getopt.sh
@@ -185,8 +199,9 @@ else
   echo "ERROR: Non Debian-based OS" >&2
 fi
 
-if [ ! -d "$(dirname $0)/kali-config/installer-$KALI_VARIANT" ]; then
+if [ ! -d "$SCRIPT_DIR/kali-config/installer-$KALI_VARIANT" ]; then
   echo "ERROR: Unknown variant of Kali installer configuration: $KALI_VARIANT" >&2
+  exit 1
 fi
 require_package debian-cd "3.2.1+kali1"
 require_package simple-cdd "0.6.9"
@@ -211,6 +226,10 @@ if [ "$ACTION" = "get-image-path" ]; then
   exit 0
 fi
 
+if [ "$ACTION" != "clean" ]; then
+  require_jigdo_xorrisofs
+fi
+
 if [ "$NO_CLEAN" = "" ]; then
   clean
 fi
@@ -219,7 +238,7 @@ if [ "$ACTION" = "clean" ]; then
 fi
 
 # Create image output location
-mkdir -pv $TARGET_DIR/$TARGET_SUBDIR
+mkdir -pv "$TARGET_DIR/$TARGET_SUBDIR"
 [ $? -eq 0 ] || failure
 
 # Don't quit on any errors now
@@ -320,7 +339,7 @@ fi
 set -e
 
 debug "Moving files"
-run_and_log mv -f $IMAGE_NAME $TARGET_DIR/$(target_image_name $KALI_ARCH)
-run_and_log mv -f "$BUILD_LOG" $TARGET_DIR/$(target_build_log $KALI_ARCH)
+run_and_log mv -f "$IMAGE_NAME" "$TARGET_DIR/$(target_image_name "$KALI_ARCH")"
+run_and_log mv -f "$BUILD_LOG" "$TARGET_DIR/$(target_build_log "$KALI_ARCH")"
 
-echo -e "\n***\nGENERATED KALI IMAGE: $(readlink -f $TARGET_DIR/$(target_image_name $KALI_ARCH))\n***"
+echo -e "\n***\nGENERATED KALI IMAGE: $(readlink -f "$TARGET_DIR/$(target_image_name "$KALI_ARCH")")\n***"

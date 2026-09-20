@@ -10,4 +10,5 @@ images
 ## Files
 .mirror
 build.log
+rebuild-output/
 
