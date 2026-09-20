@@ -24,5 +24,5 @@ docker run --rm \
     cp "$iso" images/*.log /out/
     (cd /out && sha256sum "$(basename "$iso")" > SHA256SUMS && sha256sum -c SHA256SUMS)
     git rev-parse HEAD > /out/SOURCE_COMMIT
-    dpkg-query -W cpio debian-cd simple-cdd xorriso > /out/BUILD_PACKAGES
+    dpkg-query -W cpio debian-cd dosfstools isolinux mtools simple-cdd xorriso > /out/BUILD_PACKAGES
   '

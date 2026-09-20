@@ -10,7 +10,7 @@ Build on a Kali Linux system with enough free space for the downloaded package m
 
 ```sh
 sudo apt update
-sudo apt install -y ca-certificates git simple-cdd debian-cd curl xorriso cpio
+sudo apt install -y ca-certificates git simple-cdd debian-cd curl xorriso cpio mtools dosfstools isolinux
 git clone https://github.com/agammann/kali-installer.git
 cd kali-installer
 ./build.sh --arch amd64 --verbose
@@ -22,7 +22,7 @@ The script reports the path to the ISO under `images/` when it finishes. It also
 ls -lh images/*.iso
 sha256sum images/*.iso
 git rev-parse HEAD
-dpkg-query -W cpio debian-cd simple-cdd xorriso
+dpkg-query -W cpio debian-cd dosfstools isolinux mtools simple-cdd xorriso
 ```
 
 The build needs an `xorrisofs` binary compiled with `libjte` (Jigdo Template Extraction). The script checks this before downloading the image's packages. If the check fails, install a compatible `xorriso` package. The `xorrisofs -version` output should contain a `libjte` line.
@@ -31,7 +31,7 @@ The default build uses `kali-rolling`, so repeating the commands at a later date
 
 ### Rebuild from GitHub in Docker
 
-On a Linux host or in WSL with Docker available, clone this GitHub repository and run:
+On a Linux host, in WSL with Docker available, or in Git Bash on Windows with Docker Desktop, clone this GitHub repository and run:
 
 ```sh
 ./scripts/rebuild-from-github.sh
@@ -44,6 +44,8 @@ The script builds a Kali container, clones the source **from GitHub inside that 
 ```
 
 The container still downloads Kali packages from Kali's package mirror. Allow substantial free disk space for the mirror, temporary build files, and output ISO. The Dockerfile pins the base-image digest, but Kali's rolling package mirror changes over time; keep the recorded build inputs when comparing results.
+
+For WSL, enable Docker Desktop's [integration for your distribution](https://docs.docker.com/desktop/features/wsl/) before running the command. Git Bash can use Docker Desktop's Windows CLI without that integration.
 
 Do not commit an ISO to this Git repository. GitHub blocks files over 100 MiB in Git and limits each Release asset to under 2 GiB. A full Kali PC installer is typically larger than that. The `netinst` variant is smaller and may fit as a Release asset after it passes an installation test; host a larger ISO elsewhere and publish its SHA-256 checksum alongside the download link. See [GitHub's repository limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits) and [Release asset limits](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases#storage-and-bandwidth-quotas).
 
