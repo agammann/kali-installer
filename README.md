@@ -47,6 +47,8 @@ The container still downloads Kali packages from Kali's package mirror. Allow su
 
 For WSL, enable Docker Desktop's [integration for your distribution](https://docs.docker.com/desktop/features/wsl/) before running the command. Git Bash can use Docker Desktop's Windows CLI without that integration.
 
+The [full build verification](BUILD-VERIFICATION.md) records a successful GitHub-source rebuild and its checksum. It does not replace an installation test in a virtual machine.
+
 Do not commit an ISO to this Git repository. GitHub blocks files over 100 MiB in Git and limits each Release asset to under 2 GiB. A full Kali PC installer is typically larger than that. The `netinst` variant is smaller and may fit as a Release asset after it passes an installation test; host a larger ISO elsewhere and publish its SHA-256 checksum alongside the download link. See [GitHub's repository limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits) and [Release asset limits](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases#storage-and-bandwidth-quotas).
 
 ## Test before use
