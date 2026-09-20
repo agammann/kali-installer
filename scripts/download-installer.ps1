@@ -120,6 +120,6 @@ try {
 } finally {
     $client.Dispose()
     foreach ($temp in $temps) {
-        if (Test-Path -LiteralPath $temp -PathType Leaf) { Remove-Item -LiteralPath $temp }
+        if (Test-Path -LiteralPath $temp -PathType Leaf) { Remove-Item -LiteralPath $temp -Force }
     }
 }
