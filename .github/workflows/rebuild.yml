@@ -96,21 +96,44 @@ jobs:
         shell: bash
         run: |
           tag="installer-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          cp scripts/download-installer.{sh,ps1} DOWNLOAD.md rebuild-output/SOURCE_COMMIT \
+          cp scripts/download-installer.{sh,ps1} rebuild-output/SOURCE_COMMIT \
             rebuild-output/BUILD_PACKAGES rebuild-output/BOOT-RECORDS.txt rebuild-output/release-parts/
           # Make the release downloaders select their own build by default.
-          sed -i "s/installer-2026-09-20/$tag/g" rebuild-output/release-parts/download-installer.{sh,ps1} \
-            rebuild-output/release-parts/DOWNLOAD.md
+          sed -i "s/installer-2026-09-20/$tag/g" rebuild-output/release-parts/download-installer.{sh,ps1}
           digest=$(cut -d ' ' -f 1 rebuild-output/SHA256SUMS)
           size=$(stat -c '%s' rebuild-output/kali-linux-rolling-installer-amd64.iso)
-          python3 - "$digest" "$size" <<'PY'
+          python3 - "$digest" "$size" "$tag" <<'PY'
           from pathlib import Path
           import sys
-          path = Path('rebuild-output/release-parts/DOWNLOAD.md')
-          text = path.read_text()
-          text = text.replace('c104e3f427d074f5fda666bf10f24ace9c9dd52f857ed0dcf4d95ced7a6ac026', sys.argv[1])
-          text = text.replace('5,047,031,808', format(int(sys.argv[2]), ','))
-          path.write_text(text)
+          digest, size, tag = sys.argv[1:]
+          count = len(list(Path('rebuild-output/release-parts').glob('*.part???')))
+          text = f'''# Download {tag}
+
+          This preview contains the full amd64 installer in {count} binary parts. Its complete size is {int(size):,} bytes. Allow at least twice that much free disk space on a filesystem supporting files larger than 4 GB.
+
+          Download the appropriate script from this release, review it, then run:
+
+          Windows PowerShell:
+
+          ```powershell
+          powershell -NoProfile -ExecutionPolicy RemoteSigned -File ./download-installer.ps1
+          ```
+
+          RemoteSigned applies only to this process. If Windows marks the script as blocked, review it and use Unblock-File before running. Follow any organization policy for script execution.
+
+          Bash on Linux, macOS, or Windows Git Bash:
+
+          ```sh
+          bash download-installer.sh
+          ```
+
+          These scripts select {tag}, verify each part, join them in order, and check the complete ISO. The result is kali-installer-download/kali-linux-rolling-installer-amd64.iso. Only flash the complete ISO. Verified parts are reused when retrying an interrupted download.
+
+          ISO SHA-256: {digest}
+
+          SOURCE_COMMIT, BUILD_PACKAGES, BOOT-RECORDS.txt, and SHA256SUMS are attached to this release. A complete installation of this particular build is not yet verified. Run the repository's VM installation check workflow with tag {tag} to test it.
+          '''
+          Path('rebuild-output/release-parts/DOWNLOAD.md').write_text(text)
           PY
           cat > rebuild-output/release-notes.md <<EOF
           Full amd64 installer rebuilt on GitHub Actions from commit $GITHUB_SHA.
