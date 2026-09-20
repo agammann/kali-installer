@@ -4,7 +4,7 @@ This is an independent GitHub import of the [Kali installer build scripts](https
 
 The installer uses [Simple-CDD](https://wiki.debian.org/Simple-CDD) and `debian-cd`. Kali's [custom ISO guide](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/) describes the upstream build process and options.
 
-For the prebuilt full installer, use the [GitHub Release download instructions](DOWNLOAD.md). The Windows and Bash scripts download three parts and verify the reconstructed ISO. The release is a preview pending a complete VM installation test.
+For the prebuilt full installer, use the [GitHub Release download instructions](DOWNLOAD.md). The Windows and Bash scripts download three parts and verify the reconstructed ISO. This independent preview passed a complete SeaBIOS VM installation and first boot; see the [verification record](BUILD-VERIFICATION.md) for results and remaining limits.
 
 ## Build an amd64 PC installer
 

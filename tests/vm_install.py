@@ -4,7 +4,7 @@ import functools
 import hashlib
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
-import os
+import logging
 from pathlib import Path
 import secrets
 import socket
@@ -21,6 +21,9 @@ parser.add_argument('--expected-sha256', required=True)
 args = parser.parse_args()
 ROOT = args.output.resolve()
 ROOT.mkdir(parents=True, exist_ok=True)
+ssh_log = logging.getLogger('paramiko')
+ssh_log.addHandler(logging.FileHandler(ROOT / 'ssh-wait.log'))
+ssh_log.propagate = False
 ISO = args.iso.resolve()
 with ISO.open('rb') as stream:
     iso_hash = hashlib.file_digest(stream, 'sha256').hexdigest()
@@ -110,6 +113,7 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
     vm = subprocess.Popen(base + ['-boot', 'c', '-serial', 'file:' + str(ROOT / 'first-boot-serial.log')], stdout=log, stderr=subprocess.STDOUT)
     try:
         client = paramiko.SSHClient()
+        # This endpoint belongs to the new guest in this private test process.
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         deadline = time.monotonic() + 900
         while True:
