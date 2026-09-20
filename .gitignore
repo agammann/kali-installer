@@ -11,4 +11,7 @@ images
 .mirror
 build.log
 rebuild-output/
-
+kali-installer-download/
+*.iso
+*.iso.part[0-9][0-9][0-9]
+__pycache__/

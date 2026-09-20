@@ -4,6 +4,8 @@ This is an independent GitHub import of the [Kali installer build scripts](https
 
 The installer uses [Simple-CDD](https://wiki.debian.org/Simple-CDD) and `debian-cd`. Kali's [custom ISO guide](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/) describes the upstream build process and options.
 
+For the prebuilt full installer, use the [GitHub Release download instructions](DOWNLOAD.md). The Windows and Bash scripts download three parts and verify the reconstructed ISO. The release is a preview pending a complete VM installation test.
+
 ## Build an amd64 PC installer
 
 Build on a Kali Linux system with enough free space for the downloaded package mirror and ISO. A Kali virtual machine or container is suitable for building; test the resulting ISO in a separate virtual machine before installing it on a PC.
@@ -49,7 +51,7 @@ For WSL, enable Docker Desktop's [integration for your distribution](https://doc
 
 The [full build verification](BUILD-VERIFICATION.md) records a successful GitHub-source rebuild and its checksum. It does not replace an installation test in a virtual machine.
 
-Do not commit an ISO to this Git repository. GitHub blocks files over 100 MiB in Git and limits each Release asset to under 2 GiB. A full Kali PC installer is typically larger than that. The `netinst` variant is smaller and may fit as a Release asset after it passes an installation test; host a larger ISO elsewhere and publish its SHA-256 checksum alongside the download link. See [GitHub's repository limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits) and [Release asset limits](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases#storage-and-bandwidth-quotas).
+Do not commit an ISO or its parts to Git. GitHub blocks files over 100 MiB in Git and limits each Release asset to under 2 GiB. This repository distributes the full ISO as three Release assets, each at most 1,900 MiB, with scripts that verify and join them. See [download and packaging instructions](DOWNLOAD.md), [GitHub's repository limits](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits), and [Release asset limits](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases#storage-and-bandwidth-quotas).
 
 ## Test before use
 

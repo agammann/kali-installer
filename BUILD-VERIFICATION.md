@@ -26,3 +26,11 @@ xorriso 1.5.8.pl02-2
 The rebuild writes `kali-linux-rolling-installer-amd64.iso`, its build log, `SHA256SUMS`, `SOURCE_COMMIT`, and `BUILD_PACKAGES` to the chosen output directory. See the [README](README.md#rebuild-from-github-in-docker) for the command and prerequisites.
 
 This verifies that the ISO builds and contains boot records. A complete installation and first boot in a virtual machine have not yet been tested. Kali's rolling mirror changes over time, so a later run may produce a different ISO and checksum even from the same source commit.
+
+## Multipart release verification
+
+The same ISO was split into three assets of 1,992,294,400, 1,992,294,400, and 1,062,443,008 bytes. The packager checked the original ISO checksum before writing the part manifest.
+
+Both Windows PowerShell 5.1 and Git Bash downloaded all three full-size parts from a local HTTP server, checked their individual SHA-256 hashes, and reconstructed the ISO with the original checksum above. The small regression fixture also passed in PowerShell 7, PowerShell 5.1, and Git Bash, including cached-part reuse and rejection of missing parts, truncated parts, duplicate or unexpected filenames, a wrong whole-image checksum, and an existing mismatched ISO.
+
+These are distribution checks; they do not change the installation-test status above. See [DOWNLOAD.md](DOWNLOAD.md) for downloading and reconstructing the release.
