@@ -22,6 +22,7 @@ xorriso 1.5.8.pl02-2
 | ISO SHA-256 | `c104e3f427d074f5fda666bf10f24ace9c9dd52f857ed0dcf4d95ced7a6ac026` |
 | Copied ISO checksum | Passed with `sha256sum -c SHA256SUMS`; host SHA-256 matched |
 | Boot records | El Torito BIOS and UEFI entries present; isohybrid MBR and GPT reported |
+| Normal ISO boot in BIOS and UEFI modes | Passed; both boot menus reached the graphical installer's language-selection screen |
 | Complete VM installation (SeaBIOS) | Passed to a new 64 GiB virtual disk |
 | First boot without ISO | Passed; root filesystem `/dev/vda1` on ext4 |
 | Created account password login | Passed over the VM's loopback-only SSH forwarding |
@@ -33,7 +34,7 @@ The rebuild writes `kali-linux-rolling-installer-amd64.iso`, its build log, `SHA
 
 The complete installation test ran in QEMU 11.1 with KVM, SeaBIOS, 4 GiB RAM, four virtual CPUs, and a new 64 GiB disk. The installer used the kernel and initrd extracted from this ISO, with the original ISO attached as its package source. After installation powered off, the VM booted its installed disk with the ISO and external kernel/initrd removed. The installed system reported Kali 2026.3. The selected desktop and default package metapackages were version 2026.3.9.
 
-See the [recorded VM results](docs/verification/installer-2026-09-20-vm.json), [graphical login screenshot](docs/verification/installer-2026-09-20-login.png), and [repeatable test instructions](VM-TESTING.md). UEFI installation, the ISO's interactive boot menu, and physical hardware have not been tested. Kali's rolling mirror changes over time, so a later run may produce a different ISO and checksum even from the same source commit; installation results apply to the exact checksum above.
+See the [recorded VM results](docs/verification/installer-2026-09-20-vm.json), [graphical login screenshot](docs/verification/installer-2026-09-20-login.png), and [repeatable test instructions](VM-TESTING.md). Separate normal ISO boot checks reached the graphical installer through both [SeaBIOS](docs/verification/installer-2026-09-20-bios-start.png) and [OVMF UEFI](docs/verification/installer-2026-09-20-uefi-start.png), with the [UEFI boot menu](docs/verification/installer-2026-09-20-uefi-menu.png) also recorded. These checks attached only the original ISO and no virtual hard disk. A complete UEFI installation and physical hardware remain untested. Kali's rolling mirror changes over time, so a later run may produce a different ISO and checksum even from the same source commit; installation results apply to the exact checksum above.
 
 ## Multipart release verification
 
