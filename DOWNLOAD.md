@@ -2,7 +2,7 @@
 
 The [installer-2026-09-20 preview release](https://github.com/agammann/kali-installer/releases/tag/installer-2026-09-20) distributes the complete amd64 installer as three parts. Each part is below GitHub's 2 GiB asset limit. Joining the parts restores the original ISO without compression or changes to its contents.
 
-The full ISO build, package consistency checks, complete SeaBIOS VM installation, and first boot with the ISO removed passed; see [BUILD-VERIFICATION.md](BUILD-VERIFICATION.md). UEFI installation and physical hardware remain untested. This is an independent preview build, not an official Kali release.
+The full ISO build, package consistency checks, complete SeaBIOS and UEFI VM installations, and first boots with the ISO removed passed; see [BUILD-VERIFICATION.md](BUILD-VERIFICATION.md). Secure Boot and physical hardware remain untested. This is an independent preview build, not an official Kali release.
 
 ## Automatic download and verification
 

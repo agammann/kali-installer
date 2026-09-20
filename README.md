@@ -4,9 +4,9 @@ This is an independent GitHub import of the [Kali installer build scripts](https
 
 The installer uses [Simple-CDD](https://wiki.debian.org/Simple-CDD) and `debian-cd`. Kali's [custom ISO guide](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/) describes the upstream build process and options.
 
-For the prebuilt full installer, use the [GitHub Release download instructions](DOWNLOAD.md). The Windows and Bash scripts download three parts and verify the reconstructed ISO. This independent preview passed a complete SeaBIOS VM installation and first boot; see the [verification record](BUILD-VERIFICATION.md) for results and remaining limits.
+For the prebuilt full installer, use the [GitHub Release download instructions](DOWNLOAD.md). The Windows and Bash scripts download three parts and verify the reconstructed ISO. This independent preview passed complete SeaBIOS and UEFI VM installations and first boots; see the [verification record](BUILD-VERIFICATION.md) for results and remaining limits.
 
-The GitHub-hosted path is also verified: [full rebuild and release publication passed](https://github.com/agammann/kali-installer/actions/runs/35526289435), then [installation of that published CI image passed](https://github.com/agammann/kali-installer/actions/runs/35527558096). Download that build from [its CI release](https://github.com/agammann/kali-installer/releases/tag/installer-ci-35526289435-1), using the scripts attached to that release.
+The GitHub-hosted path is also verified: [full rebuild and release publication passed](https://github.com/agammann/kali-installer/actions/runs/35526289435), then installation of that published CI image passed in both [SeaBIOS](https://github.com/agammann/kali-installer/actions/runs/35527558096) and [UEFI](https://github.com/agammann/kali-installer/actions/runs/35531086332). Download that build from [its CI release](https://github.com/agammann/kali-installer/releases/tag/installer-ci-35526289435-1), using the scripts attached to that release.
 
 ## Build an amd64 PC installer
 
