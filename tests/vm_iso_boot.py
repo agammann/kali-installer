@@ -120,7 +120,8 @@ def main():
 
             # This ISO's BIOS menu times out to speech installation after 30 seconds.
             # Require the original Graphical install menu early, before sending Enter.
-            wait_screen('boot-menu', started + 25, ['graphical install'])
+            # OCR reads the title reliably; inspect the retained image for the selected entry.
+            wait_screen('boot-menu', started + 25, ['kali linux installer menu', f'({args.firmware} mode)'])
             result['enter_sent_seconds'] = round(time.monotonic() - started, 2)
             if result['enter_sent_seconds'] >= 25:
                 raise RuntimeError('Refusing to select after the BIOS menu deadline')
