@@ -31,6 +31,8 @@ git rev-parse HEAD
 dpkg-query -W cpio debian-cd dosfstools isolinux mtools simple-cdd xorriso
 ```
 
+To inspect the expected filename before a build, run `./build.sh --arch amd64 --get-image-path` with the same variant, version, and subdirectory options you plan to use. It returns a path relative to `images/`, without starting a build, checking build-package availability, or replacing an existing build log.
+
 The build needs an `xorrisofs` binary compiled with `libjte` (Jigdo Template Extraction). The script checks this before downloading the image's packages. If the check fails, install a compatible `xorriso` package. The `xorrisofs -version` output should contain a `libjte` line.
 
 The default build uses `kali-rolling`, so repeating the commands at a later date can select different package versions. Record the source commit, build environment, package versions, ISO hash, and build log for each image. Kali also documents [building from `kali-last-snapshot`](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/#re-building-the-latest-kali-image) when you need to target a specific release. These steps make the build traceable; they do not promise a bit-for-bit identical ISO.
@@ -72,6 +74,8 @@ The published images are ready to install in the tested BIOS and UEFI configurat
 Boot the ISO in a disposable virtual machine. Complete an installation, then check that the new system boots, accepts the account created during setup, has working networking, and includes the packages you selected. Kali's [ISO testing guide](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/#testing-built-image) gives QEMU commands for BIOS and UEFI testing. A successful ISO build by itself does not prove that an installation works.
 
 Use the [automated VM installation check](VM-TESTING.md) to repeat a complete installation and first-boot check for a published release, either on GitHub Actions or locally with Docker and KVM. The workflow saves the tested ISO's checksum, check results, serial logs, and graphical login screenshot.
+
+For script changes, run `python3 tests/test_release_download.py` to check download, resume, and checksum rejection with small local fixtures. Run `python3 tests/test_build_cli.py` with Bash and GNU `getopt` (Linux or Windows Git Bash) to check filename queries in a temporary checkout with build commands blocked. These checks do not build an ISO or install an operating system, and do not replace the VM installation check.
 
 ## Customize the installer
 

@@ -163,9 +163,6 @@ done
 # Define log file
 BUILD_LOG="$(pwd)/build.log"
 debug "BUILD_LOG: $BUILD_LOG"
-# Create empty file
-: > "$BUILD_LOG"
-
 # Set default values
 KALI_ARCH=${KALI_ARCH:-$HOST_ARCH}
 if [ "$KALI_ARCH" = "x64" ]; then
@@ -179,6 +176,18 @@ if [ -z "$KALI_VERSION" ]; then
   KALI_VERSION="$(default_version $KALI_DIST)"
 fi
 debug "KALI_VERSION: $KALI_VERSION"
+
+if [ ! -d "$SCRIPT_DIR/kali-config/installer-$KALI_VARIANT" ]; then
+  echo "ERROR: Unknown variant of Kali installer configuration: $KALI_VARIANT" >&2
+  exit 1
+fi
+
+# Reporting a filename must not discard a previous build log or require
+# the packages and privileges used to build the image.
+if [ "$ACTION" = "get-image-path" ]; then
+  target_image_name "$KALI_ARCH"
+  exit 0
+fi
 
 # Check parameters
 debug "HOST_ARCH: $HOST_ARCH"
@@ -199,10 +208,6 @@ else
   echo "ERROR: Non Debian-based OS" >&2
 fi
 
-if [ ! -d "$SCRIPT_DIR/kali-config/installer-$KALI_VARIANT" ]; then
-  echo "ERROR: Unknown variant of Kali installer configuration: $KALI_VARIANT" >&2
-  exit 1
-fi
 require_package debian-cd "3.2.1+kali1"
 require_package simple-cdd "0.6.9"
 
@@ -221,14 +226,12 @@ IMAGE_NAME="$(image_name $KALI_ARCH)"
 debug "IMAGE_NAME: $IMAGE_NAME"
 
 debug "ACTION: $ACTION"
-if [ "$ACTION" = "get-image-path" ]; then
-  echo $(target_image_name $KALI_ARCH)
-  exit 0
-fi
-
 if [ "$ACTION" != "clean" ]; then
   require_jigdo_xorrisofs
 fi
+
+# Start a new log only after the build preflight has succeeded.
+: > "$BUILD_LOG"
 
 if [ "$NO_CLEAN" = "" ]; then
   clean
