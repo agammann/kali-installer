@@ -1,0 +1,71 @@
+name: Original ISO boot check
+
+on:
+  push:
+    branches: [fix/verified-installer-download]
+    paths: ['tests/vm_iso_boot.py', '.github/workflows/iso-boot-test.yml']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published multipart installer release
+        required: true
+        type: string
+      expected_sha256:
+        description: Independently recorded complete ISO SHA-256
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  boot:
+    strategy:
+      fail-fast: false
+      matrix:
+        firmware: [bios, uefi]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      RELEASE_TAG: ${{ inputs.tag || 'installer-ci-37003501967-1' }}
+      EXPECTED_SHA256: ${{ inputs.expected_sha256 || '19d6c81693e253b4560b92b847d3d62b46ded93f7d77c88ca64c927860a50ab0' }}
+      FIRMWARE: ${{ matrix.firmware }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Prepare disposable boot runner
+        run: |
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          test -c /dev/kvm
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends qemu-system-x86 ovmf tesseract-ocr
+          df -h /
+          free_kib=$(df --output=avail / | tail -1)
+          if (( free_kib < 12 * 1024 * 1024 )); then
+            echo 'At least 12 GiB of free runner storage is required.' >&2
+            exit 1
+          fi
+      - name: Download and verify the published ISO
+        run: |
+          ./scripts/download-installer.sh --tag "$RELEASE_TAG" --output rebuild-output/download
+          rm -- rebuild-output/download/*.part???
+      - name: Boot original ISO without a virtual hard disk or network
+        run: |
+          sudo timeout --kill-after=10s 300s python3 tests/vm_iso_boot.py \
+            --iso "$PWD/rebuild-output/download/kali-linux-rolling-installer-amd64.iso" \
+            --output "$PWD/rebuild-output/iso-boot" \
+            --expected-sha256 "$EXPECTED_SHA256" --firmware "$FIRMWARE"
+      - name: Save original ISO boot evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: iso-boot-${{ matrix.firmware }}-${{ github.run_id }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            rebuild-output/download/SHA256SUMS
+            rebuild-output/iso-boot/results.json
+            rebuild-output/iso-boot/*.png
+            rebuild-output/iso-boot/*.txt
+            rebuild-output/iso-boot/*.log
