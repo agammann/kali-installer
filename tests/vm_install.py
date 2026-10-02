@@ -103,15 +103,21 @@ d-i preseed/late_command string wget -O /tmp/finish.sh http://10.0.2.2:8766/fini
 (HTTP / 'preseed.cfg').write_text(preseed)
 server = ThreadingHTTPServer(('127.0.0.1', 8766), functools.partial(SimpleHTTPRequestHandler, directory=str(HTTP)))
 threading.Thread(target=server.serve_forever, daemon=True).start()
-for source, target in [('/install.amd/vmlinuz', 'vmlinuz'), ('/install.amd/initrd.gz', 'initrd.gz')]:
+for source, target in [('/install.amd/vmlinuz', 'vmlinuz'), ('/install.amd/initrd.gz', 'initrd.gz'),
+                       ('/simple-cdd/kali.postinst', 'kali.postinst')]:
     subprocess.run(['xorriso', '-osirrox', 'on', '-indev', str(ISO), '-extract', source, str(ROOT / target)], check=True)
+profile_hash = hashlib.sha256((ROOT / 'kali.postinst').read_bytes()).hexdigest()
 subprocess.run(['qemu-img', 'create', '-f', 'qcow2', str(DISK), '64G'], check=True)
 base = ['qemu-system-x86_64', '-enable-kvm', '-cpu', 'host', '-m', '4096', '-smp', '4',
         '-drive', f'file={DISK},format=qcow2,if=virtio', '-display', 'none',
         '-netdev', 'user,id=n0,hostfwd=tcp:127.0.0.1:2222-:22', '-device', 'virtio-net-pci,netdev=n0',
         '-qmp', f'unix:{ROOT}/qmp.sock,server=on,wait=off'] + firmware_args
 install_args = base + ['-cdrom', str(ISO), '-kernel', str(ROOT / 'vmlinuz'), '-initrd', str(ROOT / 'initrd.gz'),
-                      '-append', 'auto=true priority=critical preseed/url=http://10.0.2.2:8766/preseed.cfg console=ttyS0,115200n8 DEBIAN_FRONTEND=text net.ifnames=0',
+                      # Match the ISO menu's profile selection, then supply the disposable VM answers.
+                      '-append', 'auto=true priority=critical preseed/file=/cdrom/simple-cdd/default.preseed '
+                      'simple-cdd/profiles=kali,offline desktop=xfce '
+                      'language=en country=US locale=en_US.UTF-8 keymap=us '
+                      'preseed/url=http://10.0.2.2:8766/preseed.cfg console=ttyS0,115200n8 DEBIAN_FRONTEND=text net.ifnames=0',
                       '-serial', 'file:' + str(ROOT / 'installer-serial.log'), '-no-reboot']
 print('Starting full installation to a new 64 GiB virtual disk', flush=True)
 with (ROOT / 'qemu-install.log').open('w') as log:
@@ -148,6 +154,11 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             'installed_root': 'findmnt -n -o SOURCE,FSTYPE /',
             'kali_identity': '. /etc/os-release; test "$ID" = kali; cat /etc/os-release',
             'installer_completed': 'cat /var/log/vm-install-finished',
+            'selected_profiles': (
+                f"printf '%s  %s\\n' '{profile_hash}' /usr/local/simple-cdd/kali.postinst | sha256sum -c - && "
+                'test -s /etc/apt/sources.list.d/kali.sources && '
+                'for group in adm dialout kaboxer wireshark; do '
+                'id -nG installtest | tr " " "\\n" | grep -qx "$group" || exit 1; done'),
             'selected_packages': "dpkg-query -W -f='${Package} ${Status} ${Version}\\n' kali-linux-default kali-desktop-xfce openssh-server",
             'package_consistency': 'dpkg --audit',
             'system_boot': 'timeout 180 systemctl is-system-running --wait',
@@ -156,6 +167,13 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             'dns': 'getent ahostsv4 http.kali.org',
             'network_http': 'curl --fail --location --silent --show-error --retry 3 --max-time 60 --head https://www.kali.org/',
             'desktop_service': 'for attempt in $(seq 1 24); do systemctl is-active --quiet display-manager && exit 0; sleep 5; done; systemctl is-active display-manager',
+            'greeter_user_manager': 'uid=$(id -u lightdm) && systemctl is-active "user@$uid.service"',
+            'greeter_account_security': (
+                "getent passwd lightdm | awk -F: '$1 == \"lightdm\" {found=1; shell=$7} "
+                "END {print \"shell=\" shell; exit !(found && shell == \"/bin/false\")}' && "
+                "getent shadow lightdm | awk -F: '$1 == \"lightdm\" {found=1; locked=($2 ~ /^[!*]/); expiry=$8} "
+                "END {print \"password_locked=\" locked; print \"account_expiry=\" expiry; "
+                "exit !(found && locked && expiry == \"\")}'"),
         }
         if args.firmware == 'uefi':
             checks.update({
@@ -164,7 +182,13 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             })
         results = {}
         for name, command in checks.items():
-            _, stdout, stderr = client.exec_command(command, timeout=300)
+            if name == 'greeter_account_security':
+                stdin, stdout, stderr = client.exec_command('sudo -S -p "" -- sh -c ' + shlex.quote(command), timeout=300)
+                stdin.write(password + '\n')
+                stdin.flush()
+                stdin.channel.shutdown_write()
+            else:
+                _, stdout, stderr = client.exec_command(command, timeout=300)
             out, err = stdout.read().decode(), stderr.read().decode()
             code = stdout.channel.recv_exit_status()
             results[name] = {'exit': code, 'stdout': out, 'stderr': err}

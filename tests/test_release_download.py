@@ -148,6 +148,7 @@ class DownloadTests(unittest.TestCase):
 if __name__ == "__main__":
     from test_debian_cd_checksums import ChecksumBackportTests
     from test_vm_install_monitor import InstallerPromptTests
+    from test_lightdm_account import LightdmAccountTests
     # This is the existing CI entry point; build.sh needs GNU getopt.
     if sys.platform != "darwin":
         from test_build_cli import BuildQueryTests
