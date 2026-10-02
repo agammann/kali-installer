@@ -7,6 +7,7 @@ import json
 import logging
 from pathlib import Path
 import secrets
+import shlex
 import shutil
 import socket
 import subprocess
@@ -173,16 +174,31 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
         results['installer_boot_method'] = 'ISO kernel and initrd; original ISO attached as installation media'
         results['installed_boot_method'] = 'Virtual disk only; ISO, kernel, and initrd detached'
         (ROOT / 'results.json').write_text(json.dumps(results, indent=2))
-        if any(v['exit'] != 0 for v in results.values() if isinstance(v, dict)):
-            raise SystemExit('An installed-system check failed')
-        if results['package_consistency']['stdout'].strip():
-            raise SystemExit('dpkg audit reported a problem')
-        if '/dev/vda' not in results['installed_root']['stdout']:
-            raise SystemExit('Root filesystem is not the installed virtual disk')
-        if 'VM_INSTALL_FINISHED' not in results['installer_completed']['stdout']:
-            raise SystemExit('Missing installer completion marker')
-        if results['selected_packages']['stdout'].count('install ok installed') != 3:
-            raise SystemExit('Selected packages not fully installed')
+        if results['system_boot']['exit'] != 0:
+            diagnostics = {}
+            commands = {
+                'failed_units': 'systemctl --failed --all --no-pager --full',
+                'failed_unit_details': (
+                    'systemctl list-units --state=failed --all --no-legend --plain --no-pager | '
+                    'while read -r unit rest; do '
+                    'systemctl show "$unit" --property=Id,Result,ExecMainCode,ExecMainStatus,ActiveState,SubState; '
+                    'systemctl status --no-pager --full "$unit"; done'),
+                'boot_warnings': 'journalctl --boot --priority=warning --no-pager --lines=200',
+            }
+            for name, command in commands.items():
+                try:
+                    # The password is sent only to sudo's stdin, never to logs.
+                    stdin, stdout, stderr = client.exec_command(
+                        'sudo -S -p "" -- timeout 30 sh -c ' + shlex.quote(command), timeout=60)
+                    stdin.write(password + '\n')
+                    stdin.flush()
+                    stdin.channel.shutdown_write()
+                    out, err = stdout.read().decode(), stderr.read().decode()
+                    diagnostics[name] = {'exit': stdout.channel.recv_exit_status(),
+                                         'stdout': out, 'stderr': err}
+                except Exception as error:
+                    diagnostics[name] = {'error': str(error)}
+            (ROOT / 'system-health.log').write_text(json.dumps(diagnostics, indent=2))
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as monitor:
             monitor.connect(str(ROOT / 'qmp.sock'))
             stream = monitor.makefile('rwb')
@@ -199,6 +215,16 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
                         raise RuntimeError('VM screenshot failed: ' + str(response['error']))
                     if 'return' in response:
                         break
+        if any(v['exit'] != 0 for v in results.values() if isinstance(v, dict)):
+            raise SystemExit('An installed-system check failed')
+        if results['package_consistency']['stdout'].strip():
+            raise SystemExit('dpkg audit reported a problem')
+        if '/dev/vda' not in results['installed_root']['stdout']:
+            raise SystemExit('Root filesystem is not the installed virtual disk')
+        if 'VM_INSTALL_FINISHED' not in results['installer_completed']['stdout']:
+            raise SystemExit('Missing installer completion marker')
+        if results['selected_packages']['stdout'].count('install ok installed') != 3:
+            raise SystemExit('Selected packages not fully installed')
         print('PASS: complete installation, ISO-free disk boot, password login, desktop, packages, and networking', flush=True)
         stdin, stdout, stderr = client.exec_command('sudo -S /sbin/poweroff')
         stdin.write(password + '\n')
