@@ -14,6 +14,7 @@ import threading
 import time
 
 import paramiko
+from vm_install_monitor import wait_for_installer
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--iso', type=Path, required=True)
@@ -115,7 +116,7 @@ print('Starting full installation to a new 64 GiB virtual disk', flush=True)
 with (ROOT / 'qemu-install.log').open('w') as log:
     vm = subprocess.Popen(install_args, stdout=log, stderr=subprocess.STDOUT)
     try:
-        code = vm.wait(timeout=7200)
+        code = wait_for_installer(vm, ROOT / 'installer-serial.log', timeout=7200)
     except BaseException:
         vm.terminate()
         vm.wait(timeout=30)

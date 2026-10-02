@@ -292,6 +292,11 @@ debug "Stage 1/2 - File(s)"
 cp -aT /usr/share/debian-cd simple-cdd/debian-cd
 [ $? -eq 0 ] || failure
 
+# Backport the upstream Release/Packages checksum compatibility fix. SHA256
+# verification remains enabled; an already-fixed debian-cd copy is unchanged.
+run_and_log python3 scripts/fix-debian-cd-checksums.py "$BASEDIR/tools/make_disc_trees.pl"
+[ $? -eq 0 ] || failure
+
 # Use the same grub theme as in the live images
 # Until debian-cd is smart enough: http://bugs.debian.org/1003927
 cp -f kali-config/common/bootloaders/grub-pc/grub-theme.in simple-cdd/debian-cd/data/$CODENAME/grub-theme.in
