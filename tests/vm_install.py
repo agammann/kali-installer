@@ -208,6 +208,25 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
                     'systemctl show "$unit" --property=Id,Result,ExecMainCode,ExecMainStatus,ActiveState,SubState; '
                     'systemctl status --no-pager --full "$unit"; done'),
                 'boot_warnings': 'journalctl --boot --priority=warning --no-pager --lines=200',
+                'filesystem_mounts': (
+                    'findmnt --all --output TARGET,SOURCE,FSTYPE,OPTIONS; mount; '
+                    'cat /proc/1/mountinfo; lsblk --output NAME,TYPE,FSTYPE,SIZE,RO,MOUNTPOINTS'),
+                'filesystem_config': 'cat /etc/fstab; cat /proc/cmdline',
+                'root_var_mounts': (
+                    'for path in / /var /var/lib /var/log /var/cache; do '
+                    'printf "Path: %s\\n" "$path"; '
+                    'findmnt --target "$path" --output TARGET,SOURCE,FSTYPE,OPTIONS; done'),
+                'mount_unit_status': (
+                    'systemctl status --no-pager --full -- '
+                    'systemd-remount-fs.service -.mount var.mount systemd-fsck-root.service local-fs.target; '
+                    'systemctl show --property=Id,FragmentPath,DropInPaths,ActiveState,SubState,'
+                    'Result,ConditionResult,AssertResult,ExecMainCode,ExecMainStatus,What,Where,Options -- '
+                    'systemd-remount-fs.service -.mount var.mount systemd-fsck-root.service local-fs.target'),
+                'mount_unit_journal': (
+                    'journalctl --boot --no-pager --output=short-monotonic '
+                    '--unit=systemd-remount-fs.service --unit=-.mount --unit=var.mount '
+                    '--unit=systemd-fsck-root.service --unit=local-fs.target'),
+                'kernel_journal': 'journalctl --boot --dmesg --no-pager --output=short-monotonic',
             }
             for name, command in commands.items():
                 try:
