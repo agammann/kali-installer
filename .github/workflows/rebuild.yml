@@ -98,14 +98,24 @@ jobs:
           tag="installer-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           cp scripts/download-installer.{sh,ps1} rebuild-output/SOURCE_COMMIT \
             rebuild-output/BUILD_PACKAGES rebuild-output/BOOT-RECORDS.txt rebuild-output/release-parts/
-          # Make the release downloaders select their own build by default.
-          sed -i "s/installer-2026-09-20/$tag/g" rebuild-output/release-parts/download-installer.{sh,ps1}
           digest=$(cut -d ' ' -f 1 rebuild-output/SHA256SUMS)
           size=$(stat -c '%s' rebuild-output/kali-linux-rolling-installer-amd64.iso)
           python3 - "$digest" "$size" "$tag" <<'PY'
           from pathlib import Path
+          import re
           import sys
           digest, size, tag = sys.argv[1:]
+          # Pin each release independently of the repository's current default.
+          defaults = {
+              'download-installer.sh': (r'^tag=.*$', f'tag={tag}'),
+              'download-installer.ps1': (r"^    \[string\]\$Tag = '[^']*',$", f"    [string]$Tag = '{tag}',"),
+          }
+          for name, (pattern, replacement) in defaults.items():
+              script = Path('rebuild-output/release-parts') / name
+              text, count = re.subn(pattern, replacement, script.read_text(), flags=re.MULTILINE)
+              if count != 1:
+                  raise SystemExit(f'Expected one default release tag in {name}')
+              script.write_text(text)
           count = len(list(Path('rebuild-output/release-parts').glob('*.part???')))
           text = f'''# Download {tag}
 
