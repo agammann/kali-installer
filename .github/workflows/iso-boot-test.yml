@@ -27,8 +27,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
-      RELEASE_TAG: ${{ inputs.tag || 'installer-ci-37062982297-1' }}
-      EXPECTED_SHA256: ${{ inputs.expected_sha256 || '8f5c9d2724440101b582fce8bad6730972fc8c113e883d033947e6fb312a7261' }}
+      RELEASE_TAG: ${{ inputs.tag || 'installer-ci-37071997083-1' }}
+      EXPECTED_SHA256: ${{ inputs.expected_sha256 || '63cb32037e6d8c4e590f8f8f727aecddedab7fd131f0b92eb5895373b50227df' }}
       FIRMWARE: ${{ matrix.firmware }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
