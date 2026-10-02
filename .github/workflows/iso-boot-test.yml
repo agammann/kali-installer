@@ -25,10 +25,10 @@ jobs:
       matrix:
         firmware: [bios, uefi]
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
-      RELEASE_TAG: ${{ inputs.tag || 'installer-ci-37003501967-1' }}
-      EXPECTED_SHA256: ${{ inputs.expected_sha256 || '19d6c81693e253b4560b92b847d3d62b46ded93f7d77c88ca64c927860a50ab0' }}
+      RELEASE_TAG: ${{ inputs.tag || 'installer-ci-37062982297-1' }}
+      EXPECTED_SHA256: ${{ inputs.expected_sha256 || '8f5c9d2724440101b582fce8bad6730972fc8c113e883d033947e6fb312a7261' }}
       FIRMWARE: ${{ matrix.firmware }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
