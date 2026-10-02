@@ -126,7 +126,8 @@ def main():
             if result['enter_sent_seconds'] >= 25:
                 raise RuntimeError('Refusing to select after the BIOS menu deadline')
             monitor.call('send-key', {'keys': [{'type': 'qcode', 'data': 'ret'}], 'hold-time': 100})
-            wait_screen('installer-language', started + 270, ['select a language', 'english'])
+            wait_screen('installer-language', started + 270,
+                        ['select a language', 'choose the language to be used for the installation process'])
             result['passed'] = True
             result['scope'] = 'Original ISO menu to graphical language selection only; no disk installation'
         except BaseException as error:
