@@ -188,6 +188,7 @@ def verify_graphical_login(client, password, root):
         record['before'] = before
         if any(item.get('Class') == 'user' and item.get('Seat') == 'seat0' for item in before['sessions']):
             raise RuntimeError('A local user session already exists')
+        record['stage'] = 'qmp_connect'
         monitor = Monitor(root / 'qmp.sock', deadline)
         record['stage'] = 'greeter_focus'
         monitor.command('input-send-event', {'events': [

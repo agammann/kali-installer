@@ -253,20 +253,20 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             (ROOT / 'system-health.log').write_text(json.dumps(diagnostics, indent=2))
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as monitor:
             monitor.connect(str(ROOT / 'qmp.sock'))
-            stream = monitor.makefile('rwb')
-            stream.readline()
-            for command in [
-                {'execute': 'qmp_capabilities'},
-                {'execute': 'screendump', 'arguments': {'filename': str(ROOT / 'desktop-login.png'), 'format': 'png'}},
-            ]:
-                stream.write(json.dumps(command).encode() + b'\n')
-                stream.flush()
-                while True:
-                    response = json.loads(stream.readline())
-                    if 'error' in response:
-                        raise RuntimeError('VM screenshot failed: ' + str(response['error']))
-                    if 'return' in response:
-                        break
+            with monitor.makefile('rwb') as stream:
+                stream.readline()
+                for command in [
+                    {'execute': 'qmp_capabilities'},
+                    {'execute': 'screendump', 'arguments': {'filename': str(ROOT / 'desktop-login.png'), 'format': 'png'}},
+                ]:
+                    stream.write(json.dumps(command).encode() + b'\n')
+                    stream.flush()
+                    while True:
+                        response = json.loads(stream.readline())
+                        if 'error' in response:
+                            raise RuntimeError('VM screenshot failed: ' + str(response['error']))
+                        if 'return' in response:
+                            break
         if any(v['exit'] != 0 for v in results.values() if isinstance(v, dict)):
             raise SystemExit('An installed-system check failed')
         if results['package_consistency']['stdout'].strip():
