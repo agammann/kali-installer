@@ -16,6 +16,7 @@ import time
 
 import paramiko
 from vm_install_monitor import wait_for_installer
+from vm_graphical_login import PREVIEW_SHA256, capture_filesystem_baseline, verify_graphical_login
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--iso', type=Path, required=True)
@@ -24,7 +25,10 @@ parser.add_argument('--expected-sha256', required=True)
 parser.add_argument('--firmware', choices=('bios', 'uefi'), default='bios')
 parser.add_argument('--ovmf-code', type=Path, default=Path('/usr/share/OVMF/OVMF_CODE_4M.fd'))
 parser.add_argument('--ovmf-vars', type=Path, default=Path('/usr/share/OVMF/OVMF_VARS_4M.fd'))
+parser.add_argument('--verify-graphical-login', action='store_true')
 args = parser.parse_args()
+if args.verify_graphical_login and (args.firmware != 'uefi' or args.expected_sha256 != PREVIEW_SHA256):
+    parser.error('Graphical acceptance is limited to the reviewed UEFI preview image')
 ROOT = args.output.resolve()
 ROOT.mkdir(parents=True, exist_ok=True)
 ssh_log = logging.getLogger('paramiko')
@@ -131,6 +135,9 @@ with (ROOT / 'qemu-install.log').open('w') as log:
 if code:
     raise SystemExit(f'Installer VM exited {code}; inspect qemu-install.log')
 print('Installer powered off. Booting installed disk with ISO removed.', flush=True)
+if args.verify_graphical_login:
+    # Absolute pointer for the observed greeter; only the disposable installed-disk boot.
+    base += ['-device', 'virtio-tablet-pci']
 with (ROOT / 'qemu-boot.log').open('w') as log:
     vm = subprocess.Popen(base + ['-boot', 'c', '-serial', 'file:' + str(ROOT / 'first-boot-serial.log')], stdout=log, stderr=subprocess.STDOUT)
     try:
@@ -198,6 +205,8 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
         results['installer_boot_method'] = 'ISO kernel and initrd; original ISO attached as installation media'
         results['installed_boot_method'] = 'Virtual disk only; ISO, kernel, and initrd detached'
         (ROOT / 'results.json').write_text(json.dumps(results, indent=2))
+        if args.verify_graphical_login:
+            capture_filesystem_baseline(client, password, ROOT)
         if results['system_boot']['exit'] != 0:
             diagnostics = {}
             commands = {
@@ -268,6 +277,8 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             raise SystemExit('Missing installer completion marker')
         if results['selected_packages']['stdout'].count('install ok installed') != 3:
             raise SystemExit('Selected packages not fully installed')
+        if args.verify_graphical_login:
+            verify_graphical_login(client, password, ROOT)
         print('PASS: complete installation, ISO-free disk boot, password login, desktop, packages, and networking', flush=True)
         stdin, stdout, stderr = client.exec_command('sudo -S /sbin/poweroff')
         stdin.write(password + '\n')
