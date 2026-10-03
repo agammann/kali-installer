@@ -7,6 +7,7 @@ import json
 import logging
 from pathlib import Path
 import secrets
+import shlex
 import shutil
 import socket
 import subprocess
@@ -14,6 +15,7 @@ import threading
 import time
 
 import paramiko
+from vm_install_monitor import wait_for_installer
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--iso', type=Path, required=True)
@@ -101,21 +103,27 @@ d-i preseed/late_command string wget -O /tmp/finish.sh http://10.0.2.2:8766/fini
 (HTTP / 'preseed.cfg').write_text(preseed)
 server = ThreadingHTTPServer(('127.0.0.1', 8766), functools.partial(SimpleHTTPRequestHandler, directory=str(HTTP)))
 threading.Thread(target=server.serve_forever, daemon=True).start()
-for source, target in [('/install.amd/vmlinuz', 'vmlinuz'), ('/install.amd/initrd.gz', 'initrd.gz')]:
+for source, target in [('/install.amd/vmlinuz', 'vmlinuz'), ('/install.amd/initrd.gz', 'initrd.gz'),
+                       ('/simple-cdd/kali.postinst', 'kali.postinst')]:
     subprocess.run(['xorriso', '-osirrox', 'on', '-indev', str(ISO), '-extract', source, str(ROOT / target)], check=True)
+profile_hash = hashlib.sha256((ROOT / 'kali.postinst').read_bytes()).hexdigest()
 subprocess.run(['qemu-img', 'create', '-f', 'qcow2', str(DISK), '64G'], check=True)
 base = ['qemu-system-x86_64', '-enable-kvm', '-cpu', 'host', '-m', '4096', '-smp', '4',
         '-drive', f'file={DISK},format=qcow2,if=virtio', '-display', 'none',
         '-netdev', 'user,id=n0,hostfwd=tcp:127.0.0.1:2222-:22', '-device', 'virtio-net-pci,netdev=n0',
         '-qmp', f'unix:{ROOT}/qmp.sock,server=on,wait=off'] + firmware_args
 install_args = base + ['-cdrom', str(ISO), '-kernel', str(ROOT / 'vmlinuz'), '-initrd', str(ROOT / 'initrd.gz'),
-                      '-append', 'auto=true priority=critical preseed/url=http://10.0.2.2:8766/preseed.cfg console=ttyS0,115200n8 DEBIAN_FRONTEND=text net.ifnames=0',
+                      # Match the ISO menu's profile selection, then supply the disposable VM answers.
+                      '-append', 'auto=true priority=critical preseed/file=/cdrom/simple-cdd/default.preseed '
+                      'simple-cdd/profiles=kali,offline desktop=xfce '
+                      'language=en country=US locale=en_US.UTF-8 keymap=us '
+                      'preseed/url=http://10.0.2.2:8766/preseed.cfg console=ttyS0,115200n8 DEBIAN_FRONTEND=text net.ifnames=0',
                       '-serial', 'file:' + str(ROOT / 'installer-serial.log'), '-no-reboot']
 print('Starting full installation to a new 64 GiB virtual disk', flush=True)
 with (ROOT / 'qemu-install.log').open('w') as log:
     vm = subprocess.Popen(install_args, stdout=log, stderr=subprocess.STDOUT)
     try:
-        code = vm.wait(timeout=7200)
+        code = wait_for_installer(vm, ROOT / 'installer-serial.log', timeout=7200)
     except BaseException:
         vm.terminate()
         vm.wait(timeout=30)
@@ -144,8 +152,13 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
                               else 'test ! -d /sys/firmware/efi && echo BIOS'),
             'created_account_login': 'id',
             'installed_root': 'findmnt -n -o SOURCE,FSTYPE /',
-            'kali_identity': '. /etc/os-release; test "$ID" = kali; cat /etc/os-release',
+            'kali_identity': '. /etc/os-release; test "$ID" = kali && cat /etc/os-release',
             'installer_completed': 'cat /var/log/vm-install-finished',
+            'selected_profiles': (
+                f"printf '%s  %s\\n' '{profile_hash}' /usr/local/simple-cdd/kali.postinst | sha256sum -c - && "
+                'test -s /etc/apt/sources.list.d/kali.sources && '
+                'for group in adm dialout kaboxer wireshark; do '
+                'id -nG installtest | tr " " "\\n" | grep -qx "$group" || exit 1; done'),
             'selected_packages': "dpkg-query -W -f='${Package} ${Status} ${Version}\\n' kali-linux-default kali-desktop-xfce openssh-server",
             'package_consistency': 'dpkg --audit',
             'system_boot': 'timeout 180 systemctl is-system-running --wait',
@@ -154,6 +167,13 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             'dns': 'getent ahostsv4 http.kali.org',
             'network_http': 'curl --fail --location --silent --show-error --retry 3 --max-time 60 --head https://www.kali.org/',
             'desktop_service': 'for attempt in $(seq 1 24); do systemctl is-active --quiet display-manager && exit 0; sleep 5; done; systemctl is-active display-manager',
+            'greeter_user_manager': 'uid=$(id -u lightdm) && systemctl is-active "user@$uid.service"',
+            'greeter_account_security': (
+                "getent passwd lightdm | awk -F: '$1 == \"lightdm\" {found=1; shell=$7} "
+                "END {print \"shell=\" shell; exit !(found && shell == \"/bin/false\")}' && "
+                "getent shadow lightdm | awk -F: '$1 == \"lightdm\" {found=1; locked=($2 ~ /^[!*]/); expiry=$8} "
+                "END {print \"password_locked=\" locked; print \"account_expiry=\" expiry; "
+                "exit !(found && locked && expiry == \"\")}'"),
         }
         if args.firmware == 'uefi':
             checks.update({
@@ -162,7 +182,13 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
             })
         results = {}
         for name, command in checks.items():
-            _, stdout, stderr = client.exec_command(command, timeout=300)
+            if name == 'greeter_account_security':
+                stdin, stdout, stderr = client.exec_command('sudo -S -p "" -- sh -c ' + shlex.quote(command), timeout=300)
+                stdin.write(password + '\n')
+                stdin.flush()
+                stdin.channel.shutdown_write()
+            else:
+                _, stdout, stderr = client.exec_command(command, timeout=300)
             out, err = stdout.read().decode(), stderr.read().decode()
             code = stdout.channel.recv_exit_status()
             results[name] = {'exit': code, 'stdout': out, 'stderr': err}
@@ -172,16 +198,50 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
         results['installer_boot_method'] = 'ISO kernel and initrd; original ISO attached as installation media'
         results['installed_boot_method'] = 'Virtual disk only; ISO, kernel, and initrd detached'
         (ROOT / 'results.json').write_text(json.dumps(results, indent=2))
-        if any(v['exit'] != 0 for v in results.values() if isinstance(v, dict)):
-            raise SystemExit('An installed-system check failed')
-        if results['package_consistency']['stdout'].strip():
-            raise SystemExit('dpkg audit reported a problem')
-        if '/dev/vda' not in results['installed_root']['stdout']:
-            raise SystemExit('Root filesystem is not the installed virtual disk')
-        if 'VM_INSTALL_FINISHED' not in results['installer_completed']['stdout']:
-            raise SystemExit('Missing installer completion marker')
-        if results['selected_packages']['stdout'].count('install ok installed') != 3:
-            raise SystemExit('Selected packages not fully installed')
+        if results['system_boot']['exit'] != 0:
+            diagnostics = {}
+            commands = {
+                'failed_units': 'systemctl --failed --all --no-pager --full',
+                'failed_unit_details': (
+                    'systemctl list-units --state=failed --all --no-legend --plain --no-pager | '
+                    'while read -r unit rest; do '
+                    'systemctl show "$unit" --property=Id,Result,ExecMainCode,ExecMainStatus,ActiveState,SubState; '
+                    'systemctl status --no-pager --full "$unit"; done'),
+                'boot_warnings': 'journalctl --boot --priority=warning --no-pager --lines=200',
+                'filesystem_mounts': (
+                    'findmnt --all --output TARGET,SOURCE,FSTYPE,OPTIONS; mount; '
+                    'cat /proc/1/mountinfo; lsblk --output NAME,TYPE,FSTYPE,SIZE,RO,MOUNTPOINTS'),
+                'filesystem_config': 'cat /etc/fstab; cat /proc/cmdline',
+                'root_var_mounts': (
+                    'for path in / /var /var/lib /var/log /var/cache; do '
+                    'printf "Path: %s\\n" "$path"; '
+                    'findmnt --target "$path" --output TARGET,SOURCE,FSTYPE,OPTIONS; done'),
+                'mount_unit_status': (
+                    'systemctl status --no-pager --full -- '
+                    'systemd-remount-fs.service -.mount var.mount systemd-fsck-root.service local-fs.target; '
+                    'systemctl show --property=Id,FragmentPath,DropInPaths,ActiveState,SubState,'
+                    'Result,ConditionResult,AssertResult,ExecMainCode,ExecMainStatus,What,Where,Options -- '
+                    'systemd-remount-fs.service -.mount var.mount systemd-fsck-root.service local-fs.target'),
+                'mount_unit_journal': (
+                    'journalctl --boot --no-pager --output=short-monotonic '
+                    '--unit=systemd-remount-fs.service --unit=-.mount --unit=var.mount '
+                    '--unit=systemd-fsck-root.service --unit=local-fs.target'),
+                'kernel_journal': 'journalctl --boot --dmesg --no-pager --output=short-monotonic',
+            }
+            for name, command in commands.items():
+                try:
+                    # The password is sent only to sudo's stdin, never to logs.
+                    stdin, stdout, stderr = client.exec_command(
+                        'sudo -S -p "" -- timeout 30 sh -c ' + shlex.quote(command), timeout=60)
+                    stdin.write(password + '\n')
+                    stdin.flush()
+                    stdin.channel.shutdown_write()
+                    out, err = stdout.read().decode(), stderr.read().decode()
+                    diagnostics[name] = {'exit': stdout.channel.recv_exit_status(),
+                                         'stdout': out, 'stderr': err}
+                except Exception as error:
+                    diagnostics[name] = {'error': str(error)}
+            (ROOT / 'system-health.log').write_text(json.dumps(diagnostics, indent=2))
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as monitor:
             monitor.connect(str(ROOT / 'qmp.sock'))
             stream = monitor.makefile('rwb')
@@ -198,6 +258,16 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
                         raise RuntimeError('VM screenshot failed: ' + str(response['error']))
                     if 'return' in response:
                         break
+        if any(v['exit'] != 0 for v in results.values() if isinstance(v, dict)):
+            raise SystemExit('An installed-system check failed')
+        if results['package_consistency']['stdout'].strip():
+            raise SystemExit('dpkg audit reported a problem')
+        if '/dev/vda' not in results['installed_root']['stdout']:
+            raise SystemExit('Root filesystem is not the installed virtual disk')
+        if 'VM_INSTALL_FINISHED' not in results['installer_completed']['stdout']:
+            raise SystemExit('Missing installer completion marker')
+        if results['selected_packages']['stdout'].count('install ok installed') != 3:
+            raise SystemExit('Selected packages not fully installed')
         print('PASS: complete installation, ISO-free disk boot, password login, desktop, packages, and networking', flush=True)
         stdin, stdout, stderr = client.exec_command('sudo -S /sbin/poweroff')
         stdin.write(password + '\n')

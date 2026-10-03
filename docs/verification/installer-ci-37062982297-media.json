@@ -1,0 +1,60 @@
+{
+  "release_tag": "installer-ci-37062982297-1",
+  "source_commit": "f45dd5729fa436236189353d81ac794dc5bccc13",
+  "build_run": {
+    "id": 37062982297,
+    "url": "https://github.com/agammann/kali-installer/actions/runs/37062982297",
+    "conclusion": "success"
+  },
+  "iso_bytes": 5047031808,
+  "parts": [
+    {
+      "name": "kali-linux-rolling-installer-amd64.iso.part001",
+      "bytes": 1992294400,
+      "sha256": "b0854367357ddb65e30010820cd400e20011b684bb59bcf45f7c19575bac7b30"
+    },
+    {
+      "name": "kali-linux-rolling-installer-amd64.iso.part002",
+      "bytes": 1992294400,
+      "sha256": "9d38875cc046c3368437f2e3e3a54da9afc190076731beaa473c8f7dfa672ab5"
+    },
+    {
+      "name": "kali-linux-rolling-installer-amd64.iso.part003",
+      "bytes": 1062443008,
+      "sha256": "faec73cc7aec3557c01a3eb186cad0d8e172f3cf443e5ea6f7f799fcabcced19"
+    }
+  ],
+  "indexes": [
+    {
+      "path": "/dists/kali-rolling/contrib/binary-amd64/Packages.gz",
+      "packages": 2,
+      "verified_bytes": 832908
+    },
+    {
+      "path": "/dists/kali-rolling/main/binary-amd64/Packages.gz",
+      "packages": 3703,
+      "verified_bytes": 4469365930
+    },
+    {
+      "path": "/dists/kali-rolling/main/debian-installer/binary-amd64/Packages.gz",
+      "packages": 233,
+      "verified_bytes": 85033300
+    },
+    {
+      "path": "/dists/kali-rolling/non-free/binary-amd64/Packages.gz",
+      "packages": 11,
+      "verified_bytes": 70603480
+    },
+    {
+      "path": "/dists/kali-rolling/non-free-firmware/binary-amd64/Packages.gz",
+      "packages": 17,
+      "verified_bytes": 265090700
+    }
+  ],
+  "passed": true,
+  "iso_sha256": "8f5c9d2724440101b582fce8bad6730972fc8c113e883d033947e6fb312a7261",
+  "release_sha512_advertised": false,
+  "selected_checksum": "SHA256",
+  "unique_packages_verified": 3966,
+  "total_package_bytes_verified": 4890926318
+}

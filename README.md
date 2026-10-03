@@ -4,11 +4,11 @@ This is an independent GitHub import of the [Kali installer build scripts](https
 
 The installer uses [Simple-CDD](https://wiki.debian.org/Simple-CDD) and `debian-cd`. Kali's [custom ISO guide](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/) describes the upstream build process and options.
 
-For the prebuilt full installer, use the [GitHub Release download instructions](DOWNLOAD.md). The Windows and Bash scripts download three parts and verify the reconstructed ISO. This independent preview passed complete SeaBIOS and UEFI VM installations and first boots; see the [verification record](BUILD-VERIFICATION.md) for results and remaining limits.
+For prebuilt installers, use the [GitHub Release download instructions](DOWNLOAD.md). The Windows and Bash scripts download three parts and verify the reconstructed ISO. Installation results apply to an exact image: the September 20 releases [installer-2026-09-20](https://github.com/agammann/kali-installer/releases/tag/installer-2026-09-20) and [installer-ci-35526289435-1](https://github.com/agammann/kali-installer/releases/tag/installer-ci-35526289435-1) passed complete SeaBIOS and UEFI VM installations and first boots. Their hashes and evidence are in the [verification record](BUILD-VERIFICATION.md).
 
-The GitHub-hosted path is also verified: [full rebuild and release publication passed](https://github.com/agammann/kali-installer/actions/runs/35526289435), then installation of that published CI image passed in both [SeaBIOS](https://github.com/agammann/kali-installer/actions/runs/35527558096) and [UEFI](https://github.com/agammann/kali-installer/actions/runs/35531086332). Download that build from [its CI release](https://github.com/agammann/kali-installer/releases/tag/installer-ci-35526289435-1), using the scripts attached to that release.
+The October 2 preview `installer-ci-37071997083-1` has passing BIOS and UEFI installation and first disk boot runs, plus original-ISO boot checks. It fixes the earlier checksum metadata and LightDM account failures and verifies the Kali profile's postinstall effects. An earlier UEFI attempt on this same ISO failed with read-only filesystem errors; a fresh diagnostic run passed without changing the ISO or health checks. That failure remains unexplained, so the image remains a preview and the download defaults remain on September 20. See the [current results and failure history](BUILD-VERIFICATION.md#lightdm-and-profile-corrected-preview).
 
-The [comparison with the GitLab source](UPSTREAM-COMPARISON.md) also passed: installer configuration is unchanged, an unmodified upstream rebuild has matching package and boot content, and its complete UEFI installation passed the same 15 checks. Generated timestamps and archive metadata explain the different ISO hashes.
+The [September 20 comparison with the GitLab source](UPSTREAM-COMPARISON.md) also passed: the compared installer configuration was unchanged, an unmodified upstream rebuild had matching package and boot content, and its complete UEFI installation passed the same 15 checks. Generated timestamps and archive metadata explained those builds' different ISO hashes.
 
 ## Build an amd64 PC installer
 
@@ -16,7 +16,7 @@ Build on a Kali Linux system with enough free space for the downloaded package m
 
 ```sh
 sudo apt update
-sudo apt install -y ca-certificates git simple-cdd debian-cd curl xorriso cpio mtools dosfstools isolinux
+sudo apt install -y ca-certificates git python3 simple-cdd debian-cd curl xorriso cpio mtools dosfstools isolinux
 git clone https://github.com/agammann/kali-installer.git
 cd kali-installer
 ./build.sh --arch amd64 --verbose
@@ -34,6 +34,8 @@ dpkg-query -W cpio debian-cd dosfstools isolinux mtools simple-cdd xorriso
 To inspect the expected filename before a build, run `./build.sh --arch amd64 --get-image-path` with the same variant, version, and subdirectory options you plan to use. It returns a path relative to `images/`, without starting a build, checking build-package availability, or replacing an existing build log.
 
 The build needs an `xorrisofs` binary compiled with `libjte` (Jigdo Template Extraction). The script checks this before downloading the image's packages. If the check fails, install a compatible `xorriso` package. The `xorrisofs -version` output should contain a `libjte` line.
+
+The build also applies [debian-cd's checksum metadata fix](https://salsa.debian.org/images-team/debian-cd/-/commit/7df98e9fbc4b97d67073f0de6ca47820e725a81a) to its private copy of the build tools. With `debian-cd` 3.2.3 and `debootstrap` 1.0.145, an image can otherwise reject valid packages during base installation: its `Release` file advertises SHA512 while its `Packages` records contain SHA256. The backport keeps SHA256 verification and leaves an already-fixed copy unchanged.
 
 The default build uses `kali-rolling`, so repeating the commands at a later date can select different package versions. Record the source commit, build environment, package versions, ISO hash, and build log for each image. Kali also documents [building from `kali-last-snapshot`](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/#re-building-the-latest-kali-image) when you need to target a specific release. These steps make the build traceable; they do not promise a bit-for-bit identical ISO.
 
@@ -69,13 +71,13 @@ Do not commit an ISO or its parts to Git. GitHub blocks files over 100 MiB in Gi
 
 ## Test before use
 
-The published images are ready to install in the tested BIOS and UEFI configurations: the full build, verified download, complete installation, and first disk boot have passed. **Secure Boot must be disabled.** These images use Kali's unsigned kernel and do not provide Secure Boot support, consistent with [Kali's installation requirements](https://www.kali.org/docs/installation/hard-disk-install/#preparing-for-the-installation). Physical-PC testing is optional follow-up; compatibility with a particular machine's devices has not been established by the VM tests.
+The successful BIOS and UEFI results in the [verification record](BUILD-VERIFICATION.md) cover the two September 20 images identified there. Each later preview needs its own complete installation and first disk boot checks. **Secure Boot must be disabled.** The tested images use Kali's unsigned kernel and do not provide Secure Boot support, consistent with [Kali's installation requirements](https://www.kali.org/docs/installation/hard-disk-install/#preparing-for-the-installation). Compatibility with a particular physical machine's devices has not been established by the VM tests.
 
 Boot the ISO in a disposable virtual machine. Complete an installation, then check that the new system boots, accepts the account created during setup, has working networking, and includes the packages you selected. Kali's [ISO testing guide](https://www.kali.org/docs/development/live-build-a-custom-kali-iso/#testing-built-image) gives QEMU commands for BIOS and UEFI testing. A successful ISO build by itself does not prove that an installation works.
 
 Use the [automated VM installation check](VM-TESTING.md) to repeat a complete installation and first-boot check for a published release, either on GitHub Actions or locally with Docker and KVM. The workflow saves the tested ISO's checksum, check results, serial logs, and graphical login screenshot.
 
-For script changes, run `python3 tests/test_release_download.py` to check download, resume, and checksum rejection with small local fixtures. Run `python3 tests/test_build_cli.py` with Bash and GNU `getopt` (Linux or Windows Git Bash) to check filename queries in a temporary checkout with build commands blocked. These checks do not build an ISO or install an operating system, and do not replace the VM installation check.
+For script changes, run the CI entry point, `python3 tests/test_release_download.py`. It checks download, resume, checksum rejection, the checksum backport, and detection of the installer's corrupt-package prompt with small local fixtures. It also runs filename-query checks on Linux and Windows; those require Bash and GNU `getopt` and are skipped by this entry point on macOS. With those prerequisites available, run `python3 tests/test_build_cli.py` to check filename queries separately. These checks do not build an ISO or install an operating system, and do not replace the VM installation check.
 
 ## Customize the installer
 

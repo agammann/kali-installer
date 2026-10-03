@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import textwrap
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -119,6 +120,22 @@ class DownloadTests(unittest.TestCase):
                     self.assertFalse(list(output.glob(".part.*")))
                     self.assertFalse(list(output.glob(".manifest.*")))
 
+    def test_workflow_pins_both_downloaders_to_its_own_release(self):
+        workflow = (ROOT / '.github/workflows/rebuild.yml').read_text(encoding='utf-8')
+        block = workflow.split("python3 - \"$digest\" \"$size\" \"$tag\" <<'PY'\n", 1)[1].split('          PY', 1)[0]
+        with tempfile.TemporaryDirectory() as directory:
+            parts = Path(directory) / 'rebuild-output/release-parts'
+            parts.mkdir(parents=True)
+            for name in ('download-installer.sh', 'download-installer.ps1'):
+                shutil.copyfile(ROOT / 'scripts' / name, parts / name)
+            tag = 'installer-ci-next-build-1'
+            result = subprocess.run([sys.executable, '-', self.digest, str(self.original.stat().st_size), tag],
+                                    input=textwrap.dedent(block), cwd=directory, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn(f'tag={tag}\n', (parts / 'download-installer.sh').read_text())
+            self.assertIn(f"[string]$Tag = '{tag}',", (parts / 'download-installer.ps1').read_text())
+            self.assertIn(f'These scripts select {tag}', (parts / 'DOWNLOAD.md').read_text())
+
     def test_packager_refuses_wrong_original_checksum(self):
         output = self.root / "bad-package"
         result = subprocess.run([sys.executable, str(ROOT / "scripts/package-release.py"),
@@ -129,6 +146,9 @@ class DownloadTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    from test_debian_cd_checksums import ChecksumBackportTests
+    from test_vm_install_monitor import InstallerPromptTests
+    from test_lightdm_account import LightdmAccountTests
     # This is the existing CI entry point; build.sh needs GNU getopt.
     if sys.platform != "darwin":
         from test_build_cli import BuildQueryTests

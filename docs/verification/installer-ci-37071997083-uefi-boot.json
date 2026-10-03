@@ -1,0 +1,135 @@
+{
+  "iso_sha256": "63cb32037e6d8c4e590f8f8f727aecddedab7fd131f0b92eb5895373b50227df",
+  "iso_bytes": 5047031808,
+  "firmware": "uefi",
+  "attached_hard_disks": 0,
+  "network_devices": 0,
+  "external_kernel_or_initrd": false,
+  "screens": [
+    {
+      "stage": "boot-menu",
+      "seconds": 0.33,
+      "text": "Guest has not initialized the display (yet).\n"
+    },
+    {
+      "stage": "boot-menu",
+      "seconds": 1.15,
+      "text": "Guest has not initialized the display (yet).\n"
+    },
+    {
+      "stage": "boot-menu",
+      "seconds": 1.83,
+      "text": ""
+    },
+    {
+      "stage": "boot-menu",
+      "seconds": 7.6,
+      "text": "BdsDxe: loading Boot0001 \u201cUEFI QEMU DUD-ROM QNO00601 \u201d from PciRoot (6x0) /Pci (Ox1F .Ox2) /Sata (OxO,OxFFF\n\nF.0x0)\n\nBdsDxe: starting Boot0001 \u201cUEFI QEMU DUD-ROM QNO0001 \" from PciRoot (6x0) /Pci (Ox1F 0x2) /Sata (OxO,OxFF\n\nFF.Ox0)\n"
+    },
+    {
+      "stage": "boot-menu",
+      "seconds": 14.2,
+      "text": "KAL\n\nkali Linux installer menu (UEFI mode)\n\nEnter:\n\nSelect\n\nE\n\nEdit Selection\n\ni\n\nGRUB Command line\n"
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 14.55,
+      "text": "| KALI\n"
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 15.82,
+      "text": "| KALI\n"
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 16.78,
+      "text": "| KALI\n"
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 17.62,
+      "text": "| KALI\n"
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 18.29,
+      "text": ""
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 18.95,
+      "text": ""
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 19.63,
+      "text": ""
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 20.32,
+      "text": ""
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 21.0,
+      "text": ""
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 21.66,
+      "text": ""
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 22.34,
+      "text": ""
+    },
+    {
+      "stage": "installer-language",
+      "seconds": 23.34,
+      "text": "KALI\n\nSelect a language\n\nChoose the language to be used for the installation process. The selected language will also be the default language for thi\n\nstalled system.\n\nLanguage:\n\nBosnian\n\nBosanski\n\nBulgarian\n\nBenrapcxa\n\nBurmese\n\nEfe\n\ncatalan\n\ncatala\n\nChinese (Simplified)\n\nFRSC)\n\nChinese (Tradi\n\nnal)\n\nFRSC SR)\n\nCroatian\n\nHrvatski\n\nczech\n\nCe\u00e9tina\n\nDanish\n\nDansk\n\nDutch\n\nNederlands\n\nKey\n\nDzongkha\n\nEsperanto\n\nEsperanto\n\nEstonian\n\nEesti\n\nish\n\nSuomi\n\nFrench\n\nFrancais\n\nGali\n\nGalego\n\nGeorgian\n\nAeGoysa\n\nGerman\n\nDeutsch\n\nGreek\n\nEAAQuix\u00e9\n\nGujarati\n\nsped\n\nHebrew\n\nnnay\n\net\n\n(Screenshor)\n\n(\u2014 GoBack } (continue\n"
+    }
+  ],
+  "passed": true,
+  "secure_boot": "disabled: plain OVMF templates",
+  "uefi_firmware": {
+    "/usr/share/OVMF/OVMF_CODE_4M.fd": "949bfa5389c4c48582737481e7d24f46b3a16b276ef44c4089a56858c6a0a446",
+    "/usr/share/OVMF/OVMF_VARS_4M.fd": "5d2ac383371b408398accee7ec27c8c09ea5b74a0de0ceea6513388b15be5d1e"
+  },
+  "qemu_command": [
+    "qemu-system-x86_64",
+    "-enable-kvm",
+    "-cpu",
+    "host",
+    "-m",
+    "2048",
+    "-smp",
+    "2",
+    "-drive",
+    "file=/home/runner/work/kali-installer/kali-installer/rebuild-output/download/kali-linux-rolling-installer-amd64.iso,format=raw,media=cdrom,readonly=on",
+    "-boot",
+    "order=d,strict=on",
+    "-nic",
+    "none",
+    "-display",
+    "none",
+    "-serial",
+    "file:/home/runner/work/kali-installer/kali-installer/rebuild-output/iso-boot/serial.log",
+    "-qmp",
+    "unix:/home/runner/work/kali-installer/kali-installer/rebuild-output/iso-boot/qmp.sock,server=on,wait=off",
+    "-no-reboot",
+    "-machine",
+    "q35",
+    "-drive",
+    "if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd",
+    "-drive",
+    "if=pflash,format=raw,file=/home/runner/work/kali-installer/kali-installer/rebuild-output/iso-boot/uefi-vars.fd"
+  ],
+  "qemu_version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)",
+  "enter_sent_seconds": 14.2,
+  "scope": "Original ISO menu to graphical language selection only; no disk installation",
+  "iso_sha256_after": "63cb32037e6d8c4e590f8f8f727aecddedab7fd131f0b92eb5895373b50227df",
+  "duration_seconds": 26.92
+}
