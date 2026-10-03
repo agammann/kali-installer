@@ -54,7 +54,17 @@ An earlier [UEFI run 37074287101](https://github.com/agammann/kali-installer/act
 
 The subsequent diagnostic run added only read-only evidence collection after a health failure; all 18 commands, installation timing, and failure assertions were unchanged. It passed without an image change, remount, service restart, or reset of failed units. The earlier failure did not recur and remains unexplained. The added failure-only diagnostics therefore did not run. This image remains a preview; these results do not establish that the earlier filesystem failure has been repaired.
 
-The screenshots show the LightDM login screen, not an authenticated graphical desktop. Password login was tested through SSH. Secure Boot was disabled; physical hardware, every installation option, and interactive desktop use are outside these checks.
+The earlier screenshots linked above show the LightDM login screen, not an authenticated graphical desktop. Password login in those runs was tested through SSH. Secure Boot was disabled; physical hardware, every installation option, and interactive desktop use were outside those checks.
+
+### October 3 authenticated desktop check
+
+[UEFI run 37110160868](https://github.com/agammann/kali-installer/actions/runs/37110160868) completed successfully on October 3 using harness commit `c303a8df4988e5fbf26902393e1244c6fceb5cc9` and the unchanged `installer-ci-37071997083-1` ISO, SHA-256 `63cb32037e6d8c4e590f8f8f727aecddedab7fd131f0b92eb5895373b50227df`. It installed to a new 64 GiB UEFI disk and booted that disk without the ISO. The downloaded results record all 18 installed-system commands exiting successfully, including password login, selected packages, package consistency, desktop service, DNS, and HTTPS. The graphical record shows one LightDM credential submission followed by two observations of the same active local X11 user session on `seat0`, display `:0`, with both `xfce4-session` and `xfce4-panel` running.
+
+The opt-in graphical phase requires the created account to have a stable active local X11 user session on `seat0`, with both `xfce4-session` and `xfce4-panel` running. It allows one credential submission within 120 seconds. It does not exercise desktop applications or every interactive workflow. See [how to run this check](VM-TESTING.md).
+
+The [first attempt, 37108419882](https://github.com/agammann/kali-installer/actions/runs/37108419882), passed the 18 installed-system commands but stopped before entering any credentials. Its screenshot helper retained an open QMP stream before the graphical phase opened another connection. The corrected harness closes that stream and records QMP connection setup separately; the image and acceptance requirements were unchanged.
+
+The downloaded `vm-installation-evidence-37110160868.zip` is 1,187,510 bytes; SHA-256 `c36b73ed104509b5b3c402c6dae29b8440ca43eeb99918b36f23cd345c702ca6` matches the digest published with the run. Its session record, results, and both 1280×800 screenshots were inspected: the initial image shows the greeter, while the authenticated image shows the XFCE panel and Kali desktop icons. The authenticated screenshot SHA-256 is `1c59c3aed7760072865fc2c8fcc297ddbb04d72268d542cddec0a966a57859ee`, matching the session record. This image remains a preview. The earlier unexplained read-only filesystem failure remains in the record, and this run does not establish its resolution, Secure Boot support, or physical-hardware compatibility.
 
 ## September 20 local build and installation
 
