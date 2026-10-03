@@ -152,7 +152,7 @@ with (ROOT / 'qemu-boot.log').open('w') as log:
                               else 'test ! -d /sys/firmware/efi && echo BIOS'),
             'created_account_login': 'id',
             'installed_root': 'findmnt -n -o SOURCE,FSTYPE /',
-            'kali_identity': '. /etc/os-release; test "$ID" = kali; cat /etc/os-release',
+            'kali_identity': '. /etc/os-release; test "$ID" = kali && cat /etc/os-release',
             'installer_completed': 'cat /var/log/vm-install-finished',
             'selected_profiles': (
                 f"printf '%s  %s\\n' '{profile_hash}' /usr/local/simple-cdd/kali.postinst | sha256sum -c - && "
