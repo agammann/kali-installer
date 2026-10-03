@@ -17,6 +17,12 @@ on:
           - bios
           - uefi
 
+      graphical_login:
+        description: One bounded graphical login check for the reviewed UEFI preview
+        required: true
+        default: false
+        type: boolean
+
 permissions:
   contents: read
 
@@ -46,14 +52,26 @@ jobs:
       - name: Install and boot with the ISO removed
         env:
           FIRMWARE: ${{ inputs.firmware }}
+          GRAPHICAL_LOGIN: ${{ inputs.graphical_login }}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           digest=$(head -1 rebuild-output/download/SHA256SUMS | cut -d ' ' -f 1)
+          extra=()
+          if [[ "$GRAPHICAL_LOGIN" == true ]]; then
+            test "$RELEASE_TAG" = installer-ci-37071997083-1
+            test "$FIRMWARE" = uefi
+            test "$digest" = 63cb32037e6d8c4e590f8f8f727aecddedab7fd131f0b92eb5895373b50227df
+            extra+=(--verify-graphical-login)
+          fi
           sudo /usr/bin/python3 tests/vm_install.py \
             --iso "$PWD/rebuild-output/download/kali-linux-rolling-installer-amd64.iso" \
-            --output "$PWD/rebuild-output/vm-test" --expected-sha256 "$digest" --firmware "$FIRMWARE"
+            --output "$PWD/rebuild-output/vm-test" --expected-sha256 "$digest" --firmware "$FIRMWARE" "${extra[@]}"
           {
             echo '### VM installation and first disk boot passed'
             echo "Tested ISO SHA-256: $digest"
+            if [[ "$GRAPHICAL_LOGIN" == true ]]; then
+              echo 'One LightDM credential login reached an active local XFCE session and captured its desktop.'
+            fi
             echo 'Password login, selected packages, package consistency, desktop service, DNS, and HTTPS passed.'
             echo "Firmware: $FIRMWARE. Test used a disposable 64 GiB virtual disk."
             echo 'UEFI mode also checks the EFI runtime, EFI system partition, and GRUB EFI package. Secure Boot and physical hardware are not tested.'
@@ -70,3 +88,5 @@ jobs:
             rebuild-output/vm-test/results.json
             rebuild-output/vm-test/*.log
             rebuild-output/vm-test/desktop-login.png
+            rebuild-output/vm-test/authenticated-desktop.png
+            rebuild-output/vm-test/graphical-login.json
